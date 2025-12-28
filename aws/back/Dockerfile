@@ -1,3 +1,5 @@
+# aws/back/Dockerfile
+
 # ---------- base ----------
 FROM node:20-alpine AS base
 WORKDIR /app
@@ -30,17 +32,24 @@ CMD ["npm", "run", "start:dev"]
 FROM deps AS build
 COPY . .
 
+# fallback para que prisma.config.ts no reviente durante el build
 ENV DATABASE_URL="mysql://root:root@localhost:3306/app_db"
+
 RUN echo "[build] prisma generate..." \
  && npx prisma generate --schema prisma/schema.prisma \
  && echo "[build] prisma generate OK" \
  && ls -la node_modules/.prisma/client | head -n 40
 
 RUN npm run build
+
 RUN echo "[build] dist listing" \
  && ls -la dist | head -n 200 \
  && echo "[build] main candidates" \
  && (ls -la dist/main* dist/src/main* 2>/dev/null || true)
+
+# FAIL HARD si el entrypoint esperado no existe (evita runtime crash en EC2)
+RUN test -f dist/src/main.js
+
 # ---------- prod (EC2) ----------
 FROM base AS prod
 ENV NODE_ENV=production
@@ -60,4 +69,4 @@ RUN echo "[prod] prisma artifacts present?" \
  && ls -la node_modules/.prisma/client | head -n 40
 
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
