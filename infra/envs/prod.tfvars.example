@@ -1,0 +1,14 @@
+aws_region = "us-east-1"
+project    = "awsok-fullstack"
+
+my_ip_cidr = "X.X.X.X/32"
+
+ec2_instance_type = "t3.micro"
+ec2_key_name      = "awsok-key"
+
+db_name              = "app_db"
+db_username          = "app_user"
+# NEVER put real passwords here
+db_password          = "__SET_VIA_TF_VAR_DB_PASSWORD__"
+db_instance_class    = "db.t3.micro"
+db_allocated_storage = 20
