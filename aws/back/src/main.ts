@@ -1,4 +1,4 @@
-//aws\back\src\main.ts
+// aws/back/src/main.ts
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
@@ -10,6 +10,10 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule, { bufferLogs: false });
 
+  // ✅ Contrato único: TODO el backend bajo /api
+  const globalPrefix = 'api';
+  app.setGlobalPrefix(globalPrefix);
+
   const port = Number(process.env.PORT || 3000);
   const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
 
@@ -17,6 +21,7 @@ async function bootstrap() {
     port,
     corsOrigin,
     nodeEnv: process.env.NODE_ENV,
+    globalPrefix,
   });
 
   app.enableCors({
@@ -33,11 +38,15 @@ async function bootstrap() {
   );
 
   const doc = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('docs', app, doc);
+
+  // ✅ Swagger alineado con /api
+  // Queda en /api/docs (no /docs)
+  SwaggerModule.setup(`${globalPrefix}/docs`, app, doc);
 
   await app.listen(port, '0.0.0.0');
-  console.log(`[bootstrap] listening http://0.0.0.0:${port}`);
-  console.log(`[bootstrap] swagger    http://0.0.0.0:${port}/docs`);
+
+  console.log(`[bootstrap] listening http://0.0.0.0:${port}/${globalPrefix}`);
+  console.log(`[bootstrap] swagger    http://0.0.0.0:${port}/${globalPrefix}/docs`);
 }
 
 bootstrap().catch((err) => {
