@@ -3,3 +3,9 @@ node_modules
 .env
 
 /generated/prisma
+
+# local env
+.env
+
+# nested bundle artifact
+back.tgz
