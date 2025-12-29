@@ -121,7 +121,14 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    @apply antialiased;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply min-h-screen bg-background text-foreground;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, oklch(0.488 0.243 264.376), transparent 65%);
   }
 }

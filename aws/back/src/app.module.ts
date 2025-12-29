@@ -11,7 +11,8 @@ import { OrdersModule } from './orders/orders.module';
     ConfigModule.forRoot({
       isGlobal: true,
       // envFilePath opcional: si existe lo toma, si no, igual lee process.env
-      envFilePath: process.env.NODE_ENV === 'development' ? '.env' : undefined,
+      //este era para aws sin dev windows envFilePath: process.env.NODE_ENV === 'development' ? '.env' : undefined,
+      envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, '.env'],
     }),
     PrismaModule,
     HealthModule,
@@ -22,5 +23,7 @@ import { OrdersModule } from './orders/orders.module';
 export class AppModule {
   constructor() {
     console.log('[AppModule] init');
+    console.log('[Config] NODE_ENV=', process.env.NODE_ENV);
+    console.log('[Config] envFilePath=', [`.env.${process.env.NODE_ENV || 'development'}`, '.env']);
   }
 }

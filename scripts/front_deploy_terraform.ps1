@@ -15,7 +15,7 @@ function Fail($msg) {
   throw "[front_deploy_terraform] $msg"
 }
 
-function Get-TerraformOutputRaw([string]$name) : string {
+function Get-TerraformOutputRaw([string]$name) {
   Push-Location $infraPath
   try {
     # Importante: init silencioso para asegurar que lee el state correcto
