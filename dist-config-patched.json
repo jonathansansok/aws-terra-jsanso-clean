@@ -1,0 +1,223 @@
+﻿{
+    "CallerReference":  "terraform-20251227202052721800000001",
+    "Aliases":  {
+                    "Quantity":  0
+                },
+    "DefaultRootObject":  "index.html",
+    "Origins":  {
+                    "Quantity":  2,
+                    "Items":  [
+                                  {
+                                      "Id":  "s3-origin",
+                                      "DomainName":  "awsok-fullstack-web-bucket-6c5dfc13.s3.us-east-1.amazonaws.com",
+                                      "OriginPath":  "",
+                                      "CustomHeaders":  {
+                                                            "Quantity":  0
+                                                        },
+                                      "S3OriginConfig":  {
+                                                             "OriginAccessIdentity":  "",
+                                                             "OriginReadTimeout":  30
+                                                         },
+                                      "ConnectionAttempts":  3,
+                                      "ConnectionTimeout":  10,
+                                      "OriginShield":  {
+                                                           "Enabled":  false
+                                                       },
+                                      "OriginAccessControlId":  "E1JU7ITV20T3DL"
+                                  },
+                                  {
+                                      "Id":  "ec2-origin",
+                                      "DomainName":  "ec2-98-82-218-189.compute-1.amazonaws.com",
+                                      "OriginPath":  "",
+                                      "CustomHeaders":  {
+                                                            "Quantity":  0
+                                                        },
+                                      "CustomOriginConfig":  {
+                                                                 "HTTPPort":  80,
+                                                                 "HTTPSPort":  443,
+                                                                 "OriginProtocolPolicy":  "http-only",
+                                                                 "OriginSslProtocols":  {
+                                                                                            "Quantity":  1,
+                                                                                            "Items":  [
+                                                                                                          "TLSv1.2"
+                                                                                                      ]
+                                                                                        },
+                                                                 "OriginReadTimeout":  30,
+                                                                 "OriginKeepaliveTimeout":  5
+                                                             },
+                                      "ConnectionAttempts":  3,
+                                      "ConnectionTimeout":  10,
+                                      "OriginShield":  {
+                                                           "Enabled":  false
+                                                       },
+                                      "OriginAccessControlId":  ""
+                                  }
+                              ]
+                },
+    "OriginGroups":  {
+                         "Quantity":  0
+                     },
+    "DefaultCacheBehavior":  {
+                                 "TargetOriginId":  "s3-origin",
+                                 "TrustedSigners":  {
+                                                        "Enabled":  false,
+                                                        "Quantity":  0
+                                                    },
+                                 "TrustedKeyGroups":  {
+                                                          "Enabled":  false,
+                                                          "Quantity":  0
+                                                      },
+                                 "ViewerProtocolPolicy":  "redirect-to-https",
+                                 "AllowedMethods":  {
+                                                        "Quantity":  3,
+                                                        "Items":  [
+                                                                      "HEAD",
+                                                                      "GET",
+                                                                      "OPTIONS"
+                                                                  ],
+                                                        "CachedMethods":  {
+                                                                              "Quantity":  3,
+                                                                              "Items":  [
+                                                                                            "HEAD",
+                                                                                            "GET",
+                                                                                            "OPTIONS"
+                                                                                        ]
+                                                                          }
+                                                    },
+                                 "SmoothStreaming":  false,
+                                 "Compress":  false,
+                                 "LambdaFunctionAssociations":  {
+                                                                    "Quantity":  0
+                                                                },
+                                 "FunctionAssociations":  {
+                                                              "Quantity":  0
+                                                          },
+                                 "FieldLevelEncryptionId":  "",
+                                 "GrpcConfig":  {
+                                                    "Enabled":  false
+                                                },
+                                 "ForwardedValues":  {
+                                                         "QueryString":  false,
+                                                         "Cookies":  {
+                                                                         "Forward":  "none"
+                                                                     },
+                                                         "Headers":  {
+                                                                         "Quantity":  0
+                                                                     },
+                                                         "QueryStringCacheKeys":  {
+                                                                                      "Quantity":  0
+                                                                                  }
+                                                     },
+                                 "MinTTL":  0,
+                                 "DefaultTTL":  0,
+                                 "MaxTTL":  0
+                             },
+    "CacheBehaviors":  {
+                           "Quantity":  1,
+                           "Items":  [
+                                         {
+                                             "PathPattern":  "api/*",
+                                             "TargetOriginId":  "ec2-origin",
+                                             "TrustedSigners":  {
+                                                                    "Enabled":  false,
+                                                                    "Quantity":  0
+                                                                },
+                                             "TrustedKeyGroups":  {
+                                                                      "Enabled":  false,
+                                                                      "Quantity":  0
+                                                                  },
+                                             "ViewerProtocolPolicy":  "redirect-to-https",
+                                             "AllowedMethods":  {
+                                                                    "Quantity":  7,
+                                                                    "Items":  [
+                                                                                  "HEAD",
+                                                                                  "DELETE",
+                                                                                  "POST",
+                                                                                  "GET",
+                                                                                  "OPTIONS",
+                                                                                  "PUT",
+                                                                                  "PATCH"
+                                                                              ],
+                                                                    "CachedMethods":  {
+                                                                                          "Quantity":  3,
+                                                                                          "Items":  [
+                                                                                                        "HEAD",
+                                                                                                        "GET",
+                                                                                                        "OPTIONS"
+                                                                                                    ]
+                                                                                      }
+                                                                },
+                                             "SmoothStreaming":  false,
+                                             "Compress":  false,
+                                             "LambdaFunctionAssociations":  {
+                                                                                "Quantity":  0
+                                                                            },
+                                             "FunctionAssociations":  {
+                                                                          "Quantity":  0
+                                                                      },
+                                             "FieldLevelEncryptionId":  "",
+                                             "GrpcConfig":  {
+                                                                "Enabled":  false
+                                                            },
+                                             "ForwardedValues":  {
+                                                                     "QueryString":  true,
+                                                                     "Cookies":  {
+                                                                                     "Forward":  "all"
+                                                                                 },
+                                                                     "Headers":  {
+                                                                                     "Quantity":  4,
+                                                                                     "Items":  [
+                                                                                                   "Origin",
+                                                                                                   "Authorization",
+                                                                                                   "Access-Control-Request-Method",
+                                                                                                   "Access-Control-Request-Headers"
+                                                                                               ]
+                                                                                 },
+                                                                     "QueryStringCacheKeys":  {
+                                                                                                  "Quantity":  0
+                                                                                              }
+                                                                 },
+                                             "MinTTL":  0,
+                                             "DefaultTTL":  0,
+                                             "MaxTTL":  0
+                                         }
+                                     ]
+                       },
+    "CustomErrorResponses":  {
+                                 "Quantity":  1,
+                                 "Items":  [
+                                               {
+                                                   "ErrorCode":  403,
+                                                   "ResponsePagePath":  "/index.html",
+                                                   "ResponseCode":  "200",
+                                                   "ErrorCachingMinTTL":  0
+                                               }
+                                           ]
+                             },
+    "Comment":  "",
+    "Logging":  {
+                    "Enabled":  false,
+                    "IncludeCookies":  false,
+                    "Bucket":  "",
+                    "Prefix":  ""
+                },
+    "PriceClass":  "PriceClass_All",
+    "Enabled":  true,
+    "ViewerCertificate":  {
+                              "CloudFrontDefaultCertificate":  true,
+                              "SSLSupportMethod":  "vip",
+                              "MinimumProtocolVersion":  "TLSv1",
+                              "CertificateSource":  "cloudfront"
+                          },
+    "Restrictions":  {
+                         "GeoRestriction":  {
+                                                "RestrictionType":  "none",
+                                                "Quantity":  0
+                                            }
+                     },
+    "WebACLId":  "",
+    "HttpVersion":  "http2",
+    "IsIPV6Enabled":  false,
+    "ContinuousDeploymentPolicyId":  "",
+    "Staging":  false
+}

@@ -1,3 +1,4 @@
+// aws/front/web/src/features/orders/OrderFormDialog.tsx
 import { useMemo } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -17,6 +18,14 @@ import type { Product } from "../products/types"
 function toErrMessage(e: unknown) {
   if (e && typeof e === "object" && "message" in e) return String((e as { message?: unknown }).message ?? "Error")
   return "Error"
+}
+
+function toQtyNumber(raw: string): number {
+  // Input type=number entrega string. Normalizamos a int >= 1.
+  const n = Number(raw)
+  if (!Number.isFinite(n)) return 1
+  const int = Math.trunc(n)
+  return int < 1 ? 1 : int
 }
 
 export default function OrderFormDialog() {
@@ -40,21 +49,21 @@ export default function OrderFormDialog() {
 
   const form = useForm<OrderCreateFormValues>({
     resolver: zodResolver(orderCreateSchema),
-    defaultValues: { items: [{ productId: "", qty: 1 }] },
+    defaultValues: { items: [{ productId: "", quantity: 1 }] },
     mode: "onChange",
   })
 
   const items = useWatch({ control: form.control, name: "items" })
 
-  const itemsSafe = useMemo(() => {
+  const itemsSafe = useMemo<OrderCreateFormValues["items"]>(() => {
     const out = items ?? []
-    console.log("[OrderFormDialog] itemsSafe", { len: out.length })
+    console.log("[OrderFormDialog] itemsSafe", { len: out.length, out })
     return out
   }, [items])
 
   const mutation = useMutation({
     mutationFn: async (input: OrderCreateInput) => {
-      console.log("[OrderFormDialog] mutate", input)
+      console.log("[OrderFormDialog] mutate -> input", input)
       const res = await createOrder(input)
       if (!res.ok) throw res.error
       return res.data
@@ -63,7 +72,7 @@ export default function OrderFormDialog() {
       console.log("[OrderFormDialog] success", data)
       toastOk("Order created")
       qc.invalidateQueries({ queryKey: ["orders"] })
-      form.reset({ items: [{ productId: "", qty: 1 }] })
+      form.reset({ items: [{ productId: "", quantity: 1 }] })
     },
     onError: (e: unknown) => {
       console.error("[OrderFormDialog] error", e)
@@ -76,14 +85,14 @@ export default function OrderFormDialog() {
 
     const lines = itemsSafe.map((it) => {
       const unit = priceById.get(it.productId ?? "") ?? 0
-      const qty = Number(it.qty ?? 0) || 0
+      const qty = Number(it.quantity ?? 0) || 0
       const line = unit * qty
       return { productId: String(it.productId ?? ""), qty, unit, line }
     })
 
     const total = lines.reduce((acc, l) => acc + l.line, 0)
 
-    console.log("[OrderFormDialog] calc", { linesCount: lines.length, total })
+    console.log("[OrderFormDialog] calc", { linesCount: lines.length, total, lines })
 
     return { lines, total }
   }, [itemsSafe, products])
@@ -93,14 +102,17 @@ export default function OrderFormDialog() {
 
   function addLine() {
     console.log("[OrderFormDialog] addLine")
-    const next = [...itemsSafe, { productId: "", qty: 1 }]
+    const next: OrderCreateFormValues["items"] = [...itemsSafe, { productId: "", quantity: 1 }]
+    console.log("[OrderFormDialog] addLine -> next", next)
     form.setValue("items", next, { shouldValidate: true })
   }
 
   function removeLine(idx: number) {
     console.log("[OrderFormDialog] removeLine", idx)
     const next = itemsSafe.filter((_, i) => i !== idx)
-    form.setValue("items", next.length ? next : [{ productId: "", qty: 1 }], { shouldValidate: true })
+    const safeNext: OrderCreateFormValues["items"] = next.length ? next : [{ productId: "", quantity: 1 }]
+    console.log("[OrderFormDialog] removeLine -> next", safeNext)
+    form.setValue("items", safeNext, { shouldValidate: true })
   }
 
   return (
@@ -151,8 +163,9 @@ export default function OrderFormDialog() {
                           value={String(it.productId ?? "")}
                           onChange={(e) => {
                             console.log("[OrderFormDialog] product change", { idx, v: e.target.value })
-                            const next = [...itemsSafe]
+                            const next: OrderCreateFormValues["items"] = [...itemsSafe]
                             next[idx] = { ...next[idx], productId: e.target.value }
+                            console.log("[OrderFormDialog] product change -> next", next)
                             form.setValue("items", next, { shouldValidate: true })
                           }}
                           disabled={isBusy}
@@ -170,14 +183,19 @@ export default function OrderFormDialog() {
                         <Label>Qty</Label>
                         <Input
                           type="number"
-                          value={String(it.qty ?? 1)}
+                          value={String(it.quantity ?? 1)}
                           onChange={(e) => {
-                            console.log("[OrderFormDialog] qty change", { idx, v: e.target.value })
-                            const next = [...itemsSafe]
-                            next[idx] = { ...next[idx], qty: e.target.value as unknown }
+                            const qty = toQtyNumber(e.target.value)
+                            console.log("[OrderFormDialog] quantity change", { idx, raw: e.target.value, qty })
+
+                            const next: OrderCreateFormValues["items"] = [...itemsSafe]
+                            next[idx] = { ...next[idx], quantity: qty }
+
+                            console.log("[OrderFormDialog] quantity change -> next", next)
                             form.setValue("items", next, { shouldValidate: true })
                           }}
                           min={1}
+                          step={1}
                           disabled={isBusy}
                         />
                       </div>
