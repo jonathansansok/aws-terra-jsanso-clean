@@ -124,10 +124,16 @@ export default function ProductsPage() {
           <button
             onClick={() => q.refetch()}
             disabled={q.isFetching}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#6B6B8F" }}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "7px 14px", borderRadius: 8, cursor: "pointer",
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)",
+              color: "#9090B0", fontSize: 13, fontWeight: 500, transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
           >
-            <RefreshCcw className={`h-3.5 w-3.5 ${q.isFetching ? "animate-spin" : ""}`} />
+            <RefreshCcw className={`h-3.5 w-3.5 ${q.isFetching ? "animate-spin" : ""}`} style={{ width: 13, height: 13 }} />
             {t("products_refresh")}
           </button>
           <ProductFormDialog />
@@ -142,7 +148,10 @@ export default function ProductsPage() {
           style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
         >
           <span className="text-xs font-medium" style={{ color: "#6B6B8F" }}>
-            {filtered.length} {t("products_of").replace("of ", "/ ")} {stats.total}
+            <strong style={{ color: "#9090B0" }}>{filtered.length}</strong>
+            {" / "}
+            <strong style={{ color: "#9090B0" }}>{stats.total}</strong>
+            {" "}{t("products_of")}
           </span>
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" style={{ color: "#6B6B8F" }} />
