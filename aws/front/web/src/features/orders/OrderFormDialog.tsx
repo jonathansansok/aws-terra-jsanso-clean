@@ -118,7 +118,22 @@ export default function OrderFormDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button onClick={() => console.log("[OrderFormDialog] open")}>New order</Button>
+        <Button
+          style={{
+            background: "linear-gradient(135deg,#FF2D87,#8B5CF6)",
+            border: "none",
+            boxShadow: "0 0 16px rgba(139,92,246,0.4)",
+            color: "#fff",
+            fontWeight: 600,
+            fontSize: 13,
+            padding: "8px 16px",
+            borderRadius: 8,
+            cursor: "pointer",
+          }}
+          onClick={() => console.log("[OrderFormDialog] open")}
+        >
+          New order
+        </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[720px]">

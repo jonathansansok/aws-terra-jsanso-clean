@@ -1,7 +1,7 @@
 export type Product = {
   id: string
   name: string
-  price: unknown
+  price: number
   active: boolean
   createdAt: string
 }

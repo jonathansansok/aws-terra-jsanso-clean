@@ -42,7 +42,7 @@ npm run dev
 Desde la raíz del repo:
 
 powershell
-Copiar código
+ 
 cd C:\repos\awsok_clean
 docker compose -f docker-compose.dev.db.yml up -d
 docker ps
@@ -51,7 +51,7 @@ Esperar a que awsok-mysql-dev esté healthy.
 3) Backend (NestJS) + Prisma (en Windows)
 3.1) Prisma (solo si cambió el schema o si es la primera vez)
 powershell
-Copiar código
+ 
 cd C:\repos\awsok_clean\aws\back
 $env:NODE_ENV="development"
 
@@ -59,7 +59,7 @@ npx prisma generate
 npx prisma db push
 3.2) Levantar el backend en watch
 powershell
-Copiar código
+ 
 cd C:\repos\awsok_clean\aws\back
 $env:NODE_ENV="development"
 
@@ -73,7 +73,7 @@ http://localhost:3000/api/docs
 4) Bajar DEV
 4.1) Bajar DB (Docker)
 powershell
-Copiar código
+ 
 cd C:\repos\awsok_clean
 docker compose -f docker-compose.dev.db.yml down
 4.2) Bajar backend
@@ -88,7 +88,7 @@ aws/back/.env.development
 Ejemplo:
 
 env
-Copiar código
+ 
 NODE_ENV=development
 PORT=3000
 CORS_ORIGIN=http://localhost:5173
@@ -104,7 +104,7 @@ scripts\front_deploy.ps1
 
 1) Deploy del Front (script oficial)
 powershell
-Copiar código
+ 
 powershell -ExecutionPolicy Bypass -File C:\repos\awsok_clean\scripts\front_deploy.ps1
 Qué hace scripts\front_deploy.ps1
 npm run build (genera dist/)
@@ -133,24 +133,24 @@ Mirás logs y validás endpoints.
 
 1) SSH a EC2
 powershell
-Copiar código
+ 
 ssh -i "C:\Users\Jonathan\Downloads\awsok-key.pem" ubuntu@98.82.218.189
 2) Actualizar código en EC2 (git pull) + redeploy
 En EC2:
 
 bash
-Copiar código
+ 
 cd /home/ubuntu/aws-terra-jsanso
 git pull
 chmod +x scripts/*.sh
 ./scripts/20-ec2-back-run.sh
 3) Logs en vivo
 bash
-Copiar código
+ 
 sudo docker logs -f --tail 120 aws-back
 4) Validación rápida en EC2
 bash
-Copiar código
+ 
 sudo docker ps
 curl -i http://localhost/api/health
 curl -i http://localhost/api/products
@@ -162,7 +162,7 @@ scripts/20-ec2-back-run.sh
 Contenido (tal cual):
 
 bash
-Copiar código
+ 
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -275,22 +275,22 @@ git pull
 Verificar que el backend prod está OK (antes de tocar el front)
 
 powershell
-Copiar código
+ 
 curl.exe -i "https://d2hiu34pyeqif1.cloudfront.net/api/health" | Select-Object -First 20
 Ejecutar deploy del front (script único)
 
 powershell
-Copiar código
+ 
 powershell -ExecutionPolicy Bypass -File C:\repos\awsok_clean\scripts\front_deploy.ps1
 Validar que CloudFront sirva el front
 
 powershell
-Copiar código
+ 
 curl.exe -i "https://d2hiu34pyeqif1.cloudfront.net/" | Select-Object -First 25
 Validar API desde el mismo dominio (contrato final)
 
 powershell
-Copiar código
+ 
 curl.exe -i "https://d2hiu34pyeqif1.cloudfront.net/api/products" | Select-Object -First 25
 Si ves HTML en /api (mal)
 
@@ -299,7 +299,7 @@ Señal típica: json parse failed o respuesta <!doctype html>
 Acción rápida: reintentar invalidation (o volver a correr el script completo)
 
 powershell
-Copiar código
+ 
 $Profile="terraform"
 $Region="us-east-1"
 $DistId="E1P0GX0BA66AYO"
@@ -314,7 +314,7 @@ B) Backend (Nest/Prisma → Git push → EC2 git pull → Docker rebuild/run)
 En Windows: tests mínimos (local DEV)
 
 powershell
-Copiar código
+ 
 cd C:\repos\awsok_clean\aws\back
 $env:NODE_ENV="development"
 npx prisma generate
@@ -329,13 +329,13 @@ http://localhost:3000/api/docs
 Confirmar cambios listos para subir
 
 powershell
-Copiar código
+ 
 cd C:\repos\awsok_clean
 git status
 Commit + push
 
 powershell
-Copiar código
+ 
 cd C:\repos\awsok_clean
 git add -A
 git commit -m "chore: update backend"
@@ -343,7 +343,7 @@ git push
 En EC2: pull + redeploy
 
 bash
-Copiar código
+ 
 cd /home/ubuntu/aws-terra-jsanso
 git pull
 chmod +x scripts/*.sh
@@ -351,18 +351,18 @@ chmod +x scripts/*.sh
 Logs en vivo
 
 bash
-Copiar código
+ 
 sudo docker logs -f --tail 120 aws-back
 Verificación local dentro de EC2 (via nginx)
 
 bash
-Copiar código
+ 
 curl -i http://localhost/api/health
 curl -i http://localhost/api/products
 Verificación pública (CloudFront)
 
 bash
-Copiar código
+ 
 curl -i https://d2hiu34pyeqif1.cloudfront.net/api/health
 curl -i https://d2hiu34pyeqif1.cloudfront.net/api/products
 Si hay timeouts Prisma / DB
@@ -370,19 +370,22 @@ Si hay timeouts Prisma / DB
 Verificar .env real en EC2 (NO tocar desde Windows):
 
 bash
-Copiar código
+ 
 sudo grep -nE '^(NODE_ENV|PORT|CORS_ORIGIN|DATABASE_URL)=' /opt/aws-back/.env
 Verificar que el contenedor levantó con ese env:
 
 bash
-Copiar código
+ 
 sudo docker exec -it aws-back sh -lc 'echo "NODE_ENV=$NODE_ENV"; echo "DATABASE_URL=$DATABASE_URL"'
 makefile
-Copiar código
+ 
 ::contentReference[oaicite:0]{index=0}
 
+B) Config NGINX (one-time, y sólo si alguien lo rompe)
 
+Verificar que esté así:
 
-
-
-
+location /api/ {
+  proxy_pass http://127.0.0.1:3000;
+  add_header X-AWSOK-Proxy "nginx->nest" always;
+}
