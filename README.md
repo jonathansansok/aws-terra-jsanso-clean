@@ -1,391 +1,241 @@
-# Fullstack AWS (Vite + NestJS + Prisma v7 + MySQL)
+# Fullstack POS Admin — AWS Portfolio Project
 
-## Architecture (AWS domains only)
-- Frontend (SPA): S3 (private) + CloudFront (default AWS domain)
-- Backend: EC2 (public subnet) running Dockerized NestJS
-- Database: RDS MySQL (private subnets) accessible only from EC2 SG
-- No NAT Gateway (cost control)
+Production-grade fullstack CRUD demonstrating the AWS services most requested for Full Stack roles.
+React + NestJS + Prisma + MySQL, deployed on AWS with Terraform IaC.
+
+---
+
+## Current Architecture (Phase 1 — EC2)
+
+```
+User → CloudFront (HTTPS) → S3              (React SPA)
+                          → EC2 origin       (NestJS Docker)
+                               ↓
+                            RDS MySQL (private subnet)
+```
+
+- **Frontend:** S3 (private) + CloudFront (CDN + HTTPS)
+- **Backend:** EC2 (public subnet) running Dockerized NestJS, proxied via nginx
+- **Database:** RDS MySQL (private subnet, accessible only from EC2 SG)
+- **IaC:** Terraform (VPC + EC2 + RDS + S3 + CloudFront)
+- No NAT Gateway (cost control for Phase 1)
+
+## Roadmap — Phase 2 (ECR + ECS Fargate)
+
+Next migration targets the pattern recruiters look for in 2025/2026:
+
+```
+User → CloudFront (HTTPS) → S3                       (React SPA)
+                          → ALB (public subnets)
+                               → ECS Fargate (private subnets)
+                                    ↓
+                                 RDS MySQL (private subnet)
+                                    ↓
+                                 CloudWatch Logs
+```
+
+**Implementation order:**
+1. Multi-stage `Dockerfile` for Nest (already exists at `aws/back/Dockerfile`)
+2. ECR repository `project-api` — build/push image tagged by commit SHA
+3. Terraform: `infra/modules/ecr/`, `infra/modules/ecs/`, `infra/modules/alb/`
+4. ECS Fargate service (private subnets) + ALB (public subnets)
+5. Secrets Manager for `DATABASE_URL` (replaces `/opt/aws-back/.env` on EC2)
+6. Prisma migrations as ECS one-off task (`npx prisma migrate deploy`) — no open ports to RDS
+7. GitHub Actions: push → ECR build/push → `aws ecs update-service --force-new-deployment`
+8. Terraform: `infra/modules/s3_cloudfront/` replaces manual S3 config
+
+**Terraform module structure (planned):**
+```
+infra/
+  main.tf
+  variables.tf
+  outputs.tf
+  envs/dev.tfvars
+  modules/
+    network/        vpc, subnets, igw, nat
+    ecr/
+    ecs/            cluster, task def, service
+    alb/            target group, listener, /health check
+    rds/            subnet group, instance, sg
+    s3_cloudfront/  bucket, oac, distribution, SPA 404→index.html
+    secrets/        Secrets Manager for DATABASE_URL
+```
+
+---
 
 ## Repo Layout
-- aws/front/web: Vite React app (created by `npm create vite@latest web ...`)
-- aws/back: NestJS API + Prisma v7
-- infra: Terraform (VPC + EC2 + RDS + S3 + CloudFront)
-- scripts: operational runbooks (dev/prod)
 
-# awsok_clean — Playbook (DEV en Windows + Deploy PROD en AWS)
-
-Este README es un “bloc de notas” operativo: URLs y comandos robot para no romper nada.
+```
+aws/back/         NestJS API + Prisma v7
+aws/front/web/    Vite React app
+infra/            Terraform (current: VPC + EC2 + RDS + S3 + CloudFront)
+scripts/          Operational runbooks (dev + prod)
+docker-compose.dev.db.yml   Local MySQL only
+```
 
 ---
 
 ## URLs
 
-### Producción (AWS)
-- Front (CloudFront): https://d2hiu34pyeqif1.cloudfront.net/
-- API (CloudFront → EC2 origin): https://d2hiu34pyeqif1.cloudfront.net/api/health
-- Swagger (prod): https://d2hiu34pyeqif1.cloudfront.net/api/docs
-
-### Desarrollo (Windows)
-- API local: http://localhost:3000/api
-- Swagger local: http://localhost:3000/api/docs
+| Environment | URL |
+|-------------|-----|
+| Front (CloudFront) | https://d2hiu34pyeqif1.cloudfront.net/ |
+| API health (prod) | https://d2hiu34pyeqif1.cloudfront.net/api/health |
+| Swagger (prod) | https://d2hiu34pyeqif1.cloudfront.net/api/docs |
+| API local | http://localhost:3000/api |
+| Swagger local | http://localhost:3000/api/docs |
 
 ---
 
-# MODO DEV (Windows) — Front local + Back local + DB local (Docker)
-Objetivo: probar todo en tu PC sin tocar AWS.
+## Local Development (Windows)
 
-## 1) Front (Vite)
+### Requirements
+- Node.js 18+
+- Docker Desktop
+
+### 1) Start local DB (MySQL in Docker)
+
+```powershell
+cd C:\repos\awsok_clean
+docker compose -f docker-compose.dev.db.yml up -d
+docker ps   # wait for awsok-mysql-dev healthy
+```
+
+### 2) Backend (NestJS)
+
+```powershell
+cd C:\repos\awsok_clean\aws\back
+$env:NODE_ENV="development"
+npx prisma generate
+npx prisma db push        # only when schema changes
+npm run start:dev
+```
+
+Endpoints: http://localhost:3000/api — Swagger: http://localhost:3000/api/docs
+
+### 3) Frontend (Vite)
+
 ```powershell
 cd C:\repos\awsok_clean\aws\front\web
 npm run dev
-2) DB local (MySQL en Docker)
-Desde la raíz del repo:
+```
 
-powershell
- 
-cd C:\repos\awsok_clean
-docker compose -f docker-compose.dev.db.yml up -d
-docker ps
-Esperar a que awsok-mysql-dev esté healthy.
+App: http://localhost:5173
 
-3) Backend (NestJS) + Prisma (en Windows)
-3.1) Prisma (solo si cambió el schema o si es la primera vez)
-powershell
- 
-cd C:\repos\awsok_clean\aws\back
-$env:NODE_ENV="development"
+### 4) Stop DEV
 
-npx prisma generate
-npx prisma db push
-3.2) Levantar el backend en watch
-powershell
- 
-cd C:\repos\awsok_clean\aws\back
-$env:NODE_ENV="development"
-
-npm run start:dev
-Queda:
-
-http://localhost:3000/api
-
-http://localhost:3000/api/docs
-
-4) Bajar DEV
-4.1) Bajar DB (Docker)
-powershell
- 
+```powershell
+# Backend: Ctrl+C in Nest console
 cd C:\repos\awsok_clean
 docker compose -f docker-compose.dev.db.yml down
-4.2) Bajar backend
-En la consola del Nest: CTRL + C
+```
 
-DEV — Variables (referencia)
-Backend .env.development
-Ruta:
+### Environment variables
 
-aws/back/.env.development
-
-Ejemplo:
-
-env
- 
+`aws/back/.env.development`:
+```
 NODE_ENV=development
 PORT=3000
 CORS_ORIGIN=http://localhost:5173
 DATABASE_URL=mysql://root:root@localhost:3307/app_db
-Nota:
+```
 
-En dev tu MySQL está expuesto en 3307 (host Windows) → container 3306.
-
-MODO PROD (AWS) — Deploy del Front (S3 + CloudFront)
-Importante: el deploy del front se hace SIEMPRE con el script:
-
-scripts\front_deploy.ps1
-
-1) Deploy del Front (script oficial)
-powershell
- 
-powershell -ExecutionPolicy Bypass -File C:\repos\awsok_clean\scripts\front_deploy.ps1
-Qué hace scripts\front_deploy.ps1
-npm run build (genera dist/)
-
-Resuelve el bucket desde CloudFront (origin s3-origin)
-
-aws s3 sync dist/ con cache largo para assets
-
-Re-subida de index.html sin cache
-
-Invalidation /* en CloudFront
-
-(El script ya está listo, no hay que hacerlo a mano.)
-
-MODO PROD (AWS) — Deploy del Backend (EC2 + Docker + RDS)
-Modelo mental correcto
-En tu PC: hacés cambios en el backend / prisma.
-
-Subís al repo: git push.
-
-En EC2: hacés git pull.
-
-En EC2: corrés ./scripts/20-ec2-back-run.sh para rebuild + redeploy del contenedor.
-
-Mirás logs y validás endpoints.
-
-1) SSH a EC2
-powershell
- 
-ssh -i "C:\Users\Jonathan\Downloads\awsok-key.pem" ubuntu@98.82.218.189
-2) Actualizar código en EC2 (git pull) + redeploy
-En EC2:
-
-bash
- 
-cd /home/ubuntu/aws-terra-jsanso
-git pull
-chmod +x scripts/*.sh
-./scripts/20-ec2-back-run.sh
-3) Logs en vivo
-bash
- 
-sudo docker logs -f --tail 120 aws-back
-4) Validación rápida en EC2
-bash
- 
-sudo docker ps
-curl -i http://localhost/api/health
-curl -i http://localhost/api/products
-Script backend prod (referencia)
-Archivo:
-
-scripts/20-ec2-back-run.sh
-
-Contenido (tal cual):
-
-bash
- 
-#!/usr/bin/env bash
-set -euo pipefail
-
-echo "[20-ec2-back-run] start"
-echo "[20-ec2-back-run] whoami=$(whoami) pwd=$(pwd)"
-
-# Repo root expected: /home/ubuntu/aws-terra-jsanso
-cd "$(dirname "$0")/.."
-echo "[20-ec2-back-run] repo_root=$(pwd)"
-ls -la | head -n 40
-
-echo "[20-ec2-back-run] cd aws/back"
-cd aws/back
-echo "[20-ec2-back-run] back_pwd=$(pwd)"
-ls -la | head -n 60
-
-echo "[20-ec2-back-run] docker version"
-sudo docker version || true
-sudo docker info >/dev/null
-
-echo "[20-ec2-back-run] build prod image (target=prod)"
-sudo docker build -t aws-back:prod --target prod .
-
-echo "[20-ec2-back-run] ensure env file exists at /opt/aws-back/.env"
-if [[ ! -f /opt/aws-back/.env ]]; then
-  echo "[20-ec2-back-run] missing /opt/aws-back/.env"
-  exit 1
-fi
-
-echo "[20-ec2-back-run] env preview (safe keys only)"
-sudo grep -nE '^(NODE_ENV|PORT|CORS_ORIGIN|DATABASE_URL)=' /opt/aws-back/.env || true
-
-echo "[20-ec2-back-run] stop old container if exists"
-sudo docker rm -f aws-back >/dev/null 2>&1 || true
-
-echo "[20-ec2-back-run] run prod container (env-file)"
-sudo docker run -d --name aws-back --restart unless-stopped \
-  --env-file /opt/aws-back/.env \
-  -p 127.0.0.1:3000:3000 \
-  aws-back:prod
-
-echo "[20-ec2-back-run] show effective env inside container"
-sudo docker exec -it aws-back sh -lc 'echo "[in-container] NODE_ENV=$NODE_ENV"; echo "[in-container] CORS_ORIGIN=$CORS_ORIGIN"; echo "[in-container] DATABASE_URL=$DATABASE_URL"'
-
-echo "[20-ec2-back-run] logs tail"
-sudo docker logs -n 160 aws-back || true
-
-echo "[20-ec2-back-run] done"
-Notas de seguridad / no romper AWS
-RDS es privado: desde Windows NO conecta (correcto). Solo EC2 dentro del VPC.
-
-En DEV usá MySQL local (Docker) y .env.development.
-
-No mezclar .env (prod) con .env.development (dev).
-
-El deploy del front no toca Terraform state: solo usa AWS CLI + CloudFront config.
-
-Mapa de archivos clave (arquitectura)
-Front (Vite)
-aws/front/web/vite.config.ts (dev server, proxy, paths)
-
-aws/front/web/src/shared/env.ts (apiBaseUrl)
-
-aws/front/web/src/shared/http.ts (apiFetch + logs)
-
-aws/front/web/src/features/orders/*
-
-Backend (Nest + Prisma)
-aws/back/src/main.ts
-
-aws/back/src/app.module.ts
-
-aws/back/src/prisma/prisma.service.ts
-
-aws/back/prisma/schema.prisma
-
-aws/back/prisma.config.ts
-
-aws/back/.env (prod)
-
-aws/back/.env.development (dev)
-
-Infra (Terraform)
-infra/main.tf (archivo tocado para ajustes de mapeo CloudFront/EC2/RDS)
-
-infra/variables.tf
-
-infra/outputs.tf
-
-infra/terraform.tfvars
-
-Scripts
-scripts/front_deploy.ps1 (deploy front)
-
-scripts/20-ec2-back-run.sh (deploy back en EC2)
-
-perl
+`aws/front/web/.env.local`:
+```
+VITE_API_BASE_URL=/api
+```
 
 ---
 
-# Checklist antes de deploy (Front / Back) — “No romper nada”
+## Deploy — Frontend (S3 + CloudFront)
 
-## A) Front (Vite → S3 → CloudFront)
+One command from Windows:
 
-1) **Actualizar código y dejar limpio**
 ```powershell
-cd C:\repos\awsok_clean
-git status
-git pull
-Verificar que el backend prod está OK (antes de tocar el front)
-
-powershell
- 
-curl.exe -i "https://d2hiu34pyeqif1.cloudfront.net/api/health" | Select-Object -First 20
-Ejecutar deploy del front (script único)
-
-powershell
- 
 powershell -ExecutionPolicy Bypass -File C:\repos\awsok_clean\scripts\front_deploy.ps1
-Validar que CloudFront sirva el front
+```
 
-powershell
- 
+What it does: `npm run build` → S3 sync (long cache for assets, no-cache for index.html) → CloudFront invalidation `/*`
+
+**Validate:**
+```powershell
 curl.exe -i "https://d2hiu34pyeqif1.cloudfront.net/" | Select-Object -First 25
-Validar API desde el mismo dominio (contrato final)
+curl.exe -i "https://d2hiu34pyeqif1.cloudfront.net/api/health" | Select-Object -First 20
+```
 
-powershell
- 
-curl.exe -i "https://d2hiu34pyeqif1.cloudfront.net/api/products" | Select-Object -First 25
-Si ves HTML en /api (mal)
+---
 
-Señal típica: json parse failed o respuesta <!doctype html>
+## Deploy — Backend (EC2 + Docker + RDS)
 
-Acción rápida: reintentar invalidation (o volver a correr el script completo)
+Flow: local change → `git push` → SSH to EC2 → `git pull` → rebuild Docker.
 
-powershell
- 
-$Profile="terraform"
-$Region="us-east-1"
-$DistId="E1P0GX0BA66AYO"
-aws cloudfront create-invalidation --distribution-id $DistId --paths "/*" --profile $Profile --region $Region
-Confirmación final
+### 1) SSH to EC2
 
-Abrir en Chrome: https://d2hiu34pyeqif1.cloudfront.net/
+```powershell
+ssh -i "C:\Users\Jonathan\Downloads\awsok-key.pem" ubuntu@98.82.218.189
+```
 
-Abrir Swagger: https://d2hiu34pyeqif1.cloudfront.net/api/docs
+### 2) Pull + redeploy
 
-B) Backend (Nest/Prisma → Git push → EC2 git pull → Docker rebuild/run)
-En Windows: tests mínimos (local DEV)
-
-powershell
- 
-cd C:\repos\awsok_clean\aws\back
-$env:NODE_ENV="development"
-npx prisma generate
-npx prisma db push
-npm run start:dev
-Checks:
-
-http://localhost:3000/api/health
-
-http://localhost:3000/api/docs
-
-Confirmar cambios listos para subir
-
-powershell
- 
-cd C:\repos\awsok_clean
-git status
-Commit + push
-
-powershell
- 
-cd C:\repos\awsok_clean
-git add -A
-git commit -m "chore: update backend"
-git push
-En EC2: pull + redeploy
-
-bash
- 
+```bash
 cd /home/ubuntu/aws-terra-jsanso
 git pull
 chmod +x scripts/*.sh
 ./scripts/20-ec2-back-run.sh
-Logs en vivo
+```
 
-bash
- 
+### 3) Monitor
+
+```bash
 sudo docker logs -f --tail 120 aws-back
-Verificación local dentro de EC2 (via nginx)
-
-bash
- 
 curl -i http://localhost/api/health
 curl -i http://localhost/api/products
-Verificación pública (CloudFront)
+```
 
-bash
- 
-curl -i https://d2hiu34pyeqif1.cloudfront.net/api/health
-curl -i https://d2hiu34pyeqif1.cloudfront.net/api/products
-Si hay timeouts Prisma / DB
+### 4) Debug env / DB connection
 
-Verificar .env real en EC2 (NO tocar desde Windows):
-
-bash
- 
+```bash
 sudo grep -nE '^(NODE_ENV|PORT|CORS_ORIGIN|DATABASE_URL)=' /opt/aws-back/.env
-Verificar que el contenedor levantó con ese env:
-
-bash
- 
 sudo docker exec -it aws-back sh -lc 'echo "NODE_ENV=$NODE_ENV"; echo "DATABASE_URL=$DATABASE_URL"'
-makefile
- 
-::contentReference[oaicite:0]{index=0}
+```
 
-B) Config NGINX (one-time, y sólo si alguien lo rompe)
+---
 
-Verificar que esté así:
+## Pre-deploy Checklist
 
+### Frontend
+- [ ] `git pull` latest on main
+- [ ] Verify backend is healthy: `curl.exe https://d2hiu34pyeqif1.cloudfront.net/api/health`
+- [ ] Run `front_deploy.ps1`
+- [ ] Verify CloudFront serves updated app
+
+### Backend
+- [ ] Test locally (DEV) before pushing
+- [ ] `git push origin main`
+- [ ] SSH → `git pull` → `./scripts/20-ec2-back-run.sh`
+- [ ] Check logs, verify `/api/health` and `/api/products`
+
+**Never mix `.env` (prod) with `.env.development` (dev). RDS is private — only EC2 can reach it.**
+
+---
+
+## NGINX config reference (EC2 — do not modify)
+
+```nginx
 location /api/ {
   proxy_pass http://127.0.0.1:3000;
   add_header X-AWSOK-Proxy "nginx->nest" always;
 }
+```
+
+---
+
+## Key file map
+
+| Area | Files |
+|------|-------|
+| Frontend entry | `aws/front/web/vite.config.ts`, `src/shared/env.ts`, `src/shared/http.ts` |
+| Backend entry | `aws/back/src/main.ts`, `src/app.module.ts` |
+| Prisma | `aws/back/prisma/schema.prisma`, `aws/back/prisma.config.ts` |
+| Infra | `infra/main.tf`, `infra/variables.tf`, `infra/outputs.tf`, `infra/terraform.tfvars` |
+| Deploy scripts | `scripts/front_deploy.ps1`, `scripts/20-ec2-back-run.sh` |

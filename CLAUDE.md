@@ -90,3 +90,42 @@ VITE_API_BASE_URL=/api    # defaults to /api if unset
 - Backend uses class-validator DTOs with the global ValidationPipe
 - Prisma migrations are committed; run `prisma migrate dev` after pulling schema changes
 - No file should exceed 500 lines; one function/component per file
+- Local DB is `app_db` (not `awsok`) — use `--default-character-set=utf8mb4` for inserts with Spanish chars
+
+## Phase 2 Roadmap — ECR + ECS Fargate
+
+The current EC2 approach is Phase 1. Phase 2 migrates to the pattern recruiters expect:
+
+**Target architecture:**
+```
+ALB (public subnets) → ECS Fargate (private subnets) → RDS MySQL
+```
+
+**Implementation order:**
+1. `aws/back/Dockerfile` multi-stage already exists — verify it builds cleanly
+2. Create ECR repo `project-api`, build/push image tagged by commit SHA
+3. Terraform modules: `infra/modules/{ecr,ecs,alb,secrets}`
+4. ECS task definition: container port 3000, env from Secrets Manager, `awslogs` driver
+5. Prisma migrations as ECS one-off task: `npx prisma migrate deploy` (no open RDS ports)
+6. GitHub Actions: `deploy-api.yml` (push → ECR + ECS force-deploy), `deploy-web.yml` (build → S3 + CF invalidation)
+7. Secrets Manager replaces `/opt/aws-back/.env` on EC2
+
+**Terraform planned structure:**
+```
+infra/modules/
+  network/        vpc, subnets (2 public + 2 private), igw, nat
+  ecr/
+  ecs/            cluster, task def, service, autoscaling
+  alb/            listener, target group, health check /api/health
+  rds/            subnet group, instance, sg
+  s3_cloudfront/  bucket, oac, distribution, SPA 404→index.html fallback
+  secrets/        Secrets Manager for DATABASE_URL
+```
+
+**Security model (Phase 2):**
+- `sg-alb`: inbound 80/443 internet → outbound to `sg-ecs`
+- `sg-ecs`: inbound from `sg-alb` port 3000 → outbound to `sg-rds`
+- `sg-rds`: inbound 3306 from `sg-ecs` only
+- Secrets Manager / SSM for all credentials (no `.env` files in prod)
+- ECS tasks use least-privilege IAM task roles
+- CloudWatch Logs for all container stdout
