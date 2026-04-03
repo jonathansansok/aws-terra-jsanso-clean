@@ -68,14 +68,43 @@ function DeleteButton({ productId }: { productId: string }) {
     <button
       onClick={handleClick}
       disabled={mutation.isPending}
-      className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-all"
-      style={
-        confirming
-          ? { background: "rgba(255,69,96,0.2)", color: "#FF4560", border: "1px solid rgba(255,69,96,0.4)" }
-          : { background: "transparent", color: "#6B6B8F", border: "1px solid transparent" }
-      }
+      title={confirming ? "Click again to confirm" : "Delete"}
+      style={{
+        display: "flex", alignItems: "center", gap: 5,
+        padding: confirming ? "6px 12px" : "6px 10px",
+        borderRadius: 8, cursor: mutation.isPending ? "not-allowed" : "pointer",
+        fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
+        transition: "all 0.15s",
+        ...(confirming
+          ? {
+              background: "rgba(255,69,96,0.18)",
+              color: "#FF4560",
+              border: "1px solid rgba(255,69,96,0.45)",
+              boxShadow: "0 0 12px rgba(255,69,96,0.2)",
+            }
+          : {
+              background: "rgba(255,255,255,0.04)",
+              color: "#6B6B8F",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }),
+      }}
+      onMouseEnter={(e) => {
+        if (!confirming) {
+          e.currentTarget.style.background = "rgba(255,69,96,0.12)"
+          e.currentTarget.style.color = "#FF4560"
+          e.currentTarget.style.borderColor = "rgba(255,69,96,0.3)"
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!confirming) {
+          e.currentTarget.style.background = "rgba(255,255,255,0.04)"
+          e.currentTarget.style.color = "#6B6B8F"
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"
+        }
+      }}
     >
-      {confirming ? "Confirm?" : <Trash2 className="h-3.5 w-3.5" />}
+      <Trash2 style={{ width: 13, height: 13, flexShrink: 0 }} />
+      {confirming && <span>Confirm?</span>}
     </button>
   )
 }
@@ -235,7 +264,12 @@ export default function ProductsPage() {
                       <StatusBadge active={p.active} />
                     </td>
                     <td className="px-5 py-2.5 text-right">
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div style={{
+                        display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6,
+                        opacity: 0, transition: "opacity 0.15s",
+                      }}
+                        className="group-hover:opacity-100"
+                      >
                         <ProductFormDialog product={p} />
                         <DeleteButton productId={p.id} />
                       </div>

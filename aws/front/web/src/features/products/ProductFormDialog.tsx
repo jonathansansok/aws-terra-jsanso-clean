@@ -113,16 +113,28 @@ export default function ProductFormDialog({ product }: Props) {
       {isEdit ? (
         <button
           onClick={() => setOpen(true)}
+          title={t("product_form_edit_label")}
           style={{
-            width: 28, height: 28, borderRadius: 7,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)",
-            cursor: "pointer", transition: "all 0.15s", color: "#8B5CF6",
+            display: "flex", alignItems: "center", gap: 5,
+            padding: "6px 10px", borderRadius: 8, cursor: "pointer",
+            background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.22)",
+            color: "#A78BFA", fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
+            transition: "all 0.15s",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(139,92,246,0.22)"; e.currentTarget.style.borderColor = "rgba(139,92,246,0.4)" }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(139,92,246,0.1)"; e.currentTarget.style.borderColor = "rgba(139,92,246,0.2)" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(139,92,246,0.22)"
+            e.currentTarget.style.borderColor = "rgba(139,92,246,0.5)"
+            e.currentTarget.style.color = "#C4B5FD"
+            e.currentTarget.style.boxShadow = "0 0 12px rgba(139,92,246,0.25)"
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(139,92,246,0.1)"
+            e.currentTarget.style.borderColor = "rgba(139,92,246,0.22)"
+            e.currentTarget.style.color = "#A78BFA"
+            e.currentTarget.style.boxShadow = "none"
+          }}
         >
-          <Pencil style={{ width: 13, height: 13 }} />
+          <Pencil style={{ width: 13, height: 13, flexShrink: 0 }} />
         </button>
       ) : (
         <button
