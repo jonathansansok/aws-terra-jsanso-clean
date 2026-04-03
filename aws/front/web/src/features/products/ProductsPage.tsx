@@ -7,6 +7,7 @@ import ProductFormDialog from "./ProductFormDialog"
 import { formatMoney } from "../../shared/money"
 import { Package, Search, RefreshCcw, Trash2 } from "lucide-react"
 import type { Product } from "./types"
+import { useT } from "../../i18n/I18nContext"
 
 const CARD = { background: "#181740", border: "1px solid rgba(255,255,255,0.09)", borderRadius: "14px" }
 const INPUT_STYLE: React.CSSProperties = {
@@ -21,6 +22,7 @@ const INPUT_STYLE: React.CSSProperties = {
 }
 
 function StatusBadge({ active }: { active: boolean }) {
+  const { t } = useT()
   return (
     <span
       className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
@@ -30,24 +32,22 @@ function StatusBadge({ active }: { active: boolean }) {
           : { background: "rgba(107,107,143,0.12)", color: "#6B6B8F", border: "1px solid rgba(107,107,143,0.2)" }
       }
     >
-      <span
-        className="h-1.5 w-1.5 rounded-full"
-        style={{ background: active ? "#00D4B4" : "#6B6B8F" }}
-      />
-      {active ? "Active" : "Inactive"}
+      <span className="h-1.5 w-1.5 rounded-full" style={{ background: active ? "#00D4B4" : "#6B6B8F" }} />
+      {active ? t("products_status_active") : t("products_status_inactive")}
     </span>
   )
 }
 
 function DeleteButton({ productId }: { productId: string }) {
   const [confirming, setConfirming] = React.useState(false)
-  const timerRef = React.useRef<ReturnType<typeof setTimeout>>()
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const qc = useQueryClient()
+  const { t } = useT()
 
   const mutation = useMutation({
     mutationFn: () => deleteProduct(productId),
-    onSuccess: () => { toastOk("Product deleted"); qc.invalidateQueries({ queryKey: ["products"] }) },
-    onError: () => toastErr("Failed to delete product"),
+    onSuccess: () => { toastOk(t("toast_product_deleted")); qc.invalidateQueries({ queryKey: ["products"] }) },
+    onError: () => toastErr(t("products_error_title")),
   })
 
   const handleClick = () => {
@@ -81,6 +81,7 @@ function DeleteButton({ productId }: { productId: string }) {
 
 export default function ProductsPage() {
   const [query, setQuery] = React.useState("")
+  const { t } = useT()
 
   const q = useQuery({
     queryKey: ["products"],
@@ -108,14 +109,14 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-lg font-bold text-white">Products</h2>
-          <p className="text-xs" style={{ color: "#6B6B8F" }}>Manage catalog items for the POS flow</p>
+          <h2 className="text-lg font-bold text-white">{t("products_title")}</h2>
+          <p className="text-xs" style={{ color: "#6B6B8F" }}>{t("products_desc")}</p>
           <div className="mt-2 flex items-center gap-3 text-xs" style={{ color: "#6B6B8F" }}>
-            <span><span className="font-bold text-white">{stats.total}</span> total</span>
+            <span><span className="font-bold text-white">{stats.total}</span> {t("products_total")}</span>
             <span className="opacity-30">·</span>
-            <span><span className="font-bold" style={{ color: "#00D4B4" }}>{stats.active}</span> active</span>
+            <span><span className="font-bold" style={{ color: "#00D4B4" }}>{stats.active}</span> {t("products_active")}</span>
             <span className="opacity-30">·</span>
-            <span><span className="font-bold">{stats.inactive}</span> inactive</span>
+            <span><span className="font-bold">{stats.inactive}</span> {t("products_inactive")}</span>
           </div>
         </div>
 
@@ -127,7 +128,7 @@ export default function ProductsPage() {
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "#6B6B8F" }}
           >
             <RefreshCcw className={`h-3.5 w-3.5 ${q.isFetching ? "animate-spin" : ""}`} />
-            Refresh
+            {t("products_refresh")}
           </button>
           <ProductFormDialog />
         </div>
@@ -141,14 +142,14 @@ export default function ProductsPage() {
           style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
         >
           <span className="text-xs font-medium" style={{ color: "#6B6B8F" }}>
-            {filtered.length} of {stats.total} products
+            {filtered.length} {t("products_of").replace("of ", "/ ")} {stats.total}
           </span>
           <div className="relative">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" style={{ color: "#6B6B8F" }} />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Filter products..."
+              placeholder={t("products_filter")}
               style={INPUT_STYLE}
             />
           </div>
@@ -163,8 +164,8 @@ export default function ProductsPage() {
           </div>
         ) : q.isError ? (
           <div className="p-5">
-            <div className="text-sm font-semibold" style={{ color: "#FF4560" }}>Failed to load products</div>
-            <div className="text-xs mt-1" style={{ color: "#6B6B8F" }}>Check API connectivity and try again.</div>
+            <div className="text-sm font-semibold" style={{ color: "#FF4560" }}>{t("products_error_title")}</div>
+            <div className="text-xs mt-1" style={{ color: "#6B6B8F" }}>{t("products_error_desc")}</div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
@@ -172,9 +173,11 @@ export default function ProductsPage() {
               <Package className="h-6 w-6" style={{ color: "#8B5CF6" }} />
             </div>
             <div>
-              <div className="text-sm font-semibold text-white">{stats.total === 0 ? "No products yet" : "No matches"}</div>
+              <div className="text-sm font-semibold text-white">
+                {stats.total === 0 ? t("products_empty_title") : t("products_empty_filter_title")}
+              </div>
               <div className="mt-0.5 text-xs" style={{ color: "#6B6B8F" }}>
-                {stats.total === 0 ? "Create your first product." : "Try a different filter."}
+                {stats.total === 0 ? t("products_empty_desc") : t("products_empty_filter_desc")}
               </div>
             </div>
             {stats.total === 0 && <ProductFormDialog />}
@@ -184,10 +187,10 @@ export default function ProductsPage() {
             <table className="w-full">
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                  {["Name", "Price", "Status", ""].map((h) => (
+                  {[t("products_col_name"), t("products_col_price"), t("products_col_status"), ""].map((h, i) => (
                     <th
-                      key={h}
-                      className={`h-9 px-5 text-[10px] font-bold uppercase tracking-widest text-left ${h === "Price" || h === "Status" ? "text-right" : ""}`}
+                      key={i}
+                      className={`h-9 px-5 text-[10px] font-bold uppercase tracking-widest text-left ${i === 1 || i === 2 ? "text-right" : ""}`}
                       style={{ color: "#4A4A6A" }}
                     >
                       {h}

@@ -1,4 +1,4 @@
-// aws/front/web/src/features\orders\OrdersPage.tsx
+// aws/front/web/src/features/orders/OrdersPage.tsx
 import * as React from "react"
 import { createPortal } from "react-dom"
 import { useQuery } from "@tanstack/react-query"
@@ -7,6 +7,7 @@ import { toastErr } from "../../shared/toast"
 import { formatMoney } from "../../shared/money"
 import OrderFormDialog from "./OrderFormDialog"
 import { ShoppingCart, Search, RefreshCcw, X } from "lucide-react"
+import { useT } from "../../i18n/I18nContext"
 
 type OrderItem = {
   productId: string
@@ -39,32 +40,29 @@ const INPUT_STYLE: React.CSSProperties = {
   outline: "none",
 }
 
-function fmtDate(s: string) {
+function fmtDate(s: string, lang: "en" | "es") {
   try {
     const d = new Date(s)
-    return Number.isNaN(d.getTime())
-      ? s
-      : d.toLocaleString("es-AR", { dateStyle: "medium", timeStyle: "short" })
+    return Number.isNaN(d.getTime()) ? s : d.toLocaleString(lang === "es" ? "es-AR" : "en-US", { dateStyle: "medium", timeStyle: "short" })
   } catch { return s }
 }
 
 // ── Order Detail Modal ──────────────────────────────────────────────────────
 function OrderDetailModal({ order, onClose }: { order: Order; onClose: () => void }) {
   const [closing, setClosing] = React.useState(false)
+  const { t, lang } = useT()
 
   const close = React.useCallback(() => {
     setClosing(true)
     setTimeout(onClose, 200)
   }, [onClose])
 
-  // Escape key
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") close() }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
   }, [close])
 
-  // Prevent body scroll
   React.useEffect(() => {
     document.body.style.overflow = "hidden"
     return () => { document.body.style.overflow = "" }
@@ -75,7 +73,6 @@ function OrderDetailModal({ order, onClose }: { order: Order; onClose: () => voi
 
   return createPortal(
     <>
-      {/* Backdrop */}
       <div
         onClick={close}
         style={{
@@ -86,7 +83,6 @@ function OrderDetailModal({ order, onClose }: { order: Order; onClose: () => voi
         }}
       />
 
-      {/* Modal */}
       <div
         style={{
           position: "fixed", inset: 0, zIndex: 51,
@@ -115,7 +111,7 @@ function OrderDetailModal({ order, onClose }: { order: Order; onClose: () => voi
             background: "linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(255,45,135,0.04) 100%)",
           }}>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#E4E4F0" }}>Order detail</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#E4E4F0" }}>{t("order_detail_title")}</div>
               <div style={{ fontSize: 11, color: "#6B6B8F", marginTop: 3, fontFamily: "monospace" }}>
                 #{order.id}
               </div>
@@ -125,7 +121,7 @@ function OrderDetailModal({ order, onClose }: { order: Order; onClose: () => voi
                 <div style={{ fontSize: 22, fontWeight: 800, color: "#E4E4F0" }}>
                   {formatMoney(order.total)}
                 </div>
-                <div style={{ fontSize: 11, color: "#6B6B8F" }}>{fmtDate(order.createdAt)}</div>
+                <div style={{ fontSize: 11, color: "#6B6B8F" }}>{fmtDate(order.createdAt, lang)}</div>
               </div>
               <button
                 onClick={close}
@@ -153,13 +149,12 @@ function OrderDetailModal({ order, onClose }: { order: Order; onClose: () => voi
 
           {/* Items */}
           <div style={{ padding: "8px 0", maxHeight: "60vh", overflowY: "auto" }}>
-            {/* Table header */}
             <div style={{
               display: "grid", gridTemplateColumns: "1fr 60px 90px 90px",
               padding: "8px 24px",
               borderBottom: "1px solid rgba(255,255,255,0.05)",
             }}>
-              {["Product", "Qty", "Unit", "Total"].map((h, i) => (
+              {[t("order_detail_col_product"), t("order_detail_col_qty"), t("order_detail_col_unit"), t("order_detail_col_total")].map((h, i) => (
                 <div key={h} style={{
                   fontSize: 10, fontWeight: 700, letterSpacing: "0.1em",
                   color: "#3A3A5C", textTransform: "uppercase",
@@ -168,7 +163,6 @@ function OrderDetailModal({ order, onClose }: { order: Order; onClose: () => voi
               ))}
             </div>
 
-            {/* Rows */}
             {(order.items ?? []).map((item, i) => (
               <div
                 key={i}
@@ -205,10 +199,10 @@ function OrderDetailModal({ order, onClose }: { order: Order; onClose: () => voi
             background: "rgba(139,92,246,0.04)",
           }}>
             <span style={{ fontSize: 12, color: "#6B6B8F" }}>
-              {order.items?.length ?? 0} item{(order.items?.length ?? 0) !== 1 ? "s" : ""}
+              {order.items?.length ?? 0} {t("order_detail_items")}
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 13, color: "#6B6B8F" }}>Total</span>
+              <span style={{ fontSize: 13, color: "#6B6B8F" }}>{t("order_detail_total")}</span>
               <span style={{
                 fontSize: 20, fontWeight: 800,
                 background: "linear-gradient(135deg,#FF2D87,#8B5CF6)",
@@ -229,6 +223,7 @@ function OrderDetailModal({ order, onClose }: { order: Order; onClose: () => voi
 export default function OrdersPage() {
   const [query, setQuery] = React.useState("")
   const [selected, setSelected] = React.useState<Order | null>(null)
+  const { t, lang } = useT()
 
   const q = useQuery({
     queryKey: ["orders"],
@@ -253,13 +248,13 @@ export default function OrdersPage() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
         <div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#E4E4F0", margin: 0 }}>Orders</h2>
-          <p style={{ fontSize: 12, color: "#6B6B8F", marginTop: 4 }}>Sales order history</p>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#E4E4F0", margin: 0 }}>{t("orders_title")}</h2>
+          <p style={{ fontSize: 12, color: "#6B6B8F", marginTop: 4 }}>{t("orders_desc")}</p>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, fontSize: 12, color: "#6B6B8F" }}>
-            <span><strong style={{ color: "#E4E4F0" }}>{q.data?.length ?? 0}</strong> orders</span>
+            <span><strong style={{ color: "#E4E4F0" }}>{q.data?.length ?? 0}</strong> {t("orders_count_label")}</span>
             <span style={{ opacity: 0.3 }}>·</span>
             <span>
-              <strong style={{ color: "#00D4B4" }}>{formatMoney(totalRevenue)}</strong> total revenue
+              <strong style={{ color: "#00D4B4" }}>{formatMoney(totalRevenue)}</strong> {t("orders_revenue_label")}
             </span>
           </div>
         </div>
@@ -280,7 +275,7 @@ export default function OrdersPage() {
             onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
           >
             <RefreshCcw style={{ width: 13, height: 13 }} className={q.isFetching ? "animate-spin" : ""} />
-            Refresh
+            {t("orders_refresh")}
           </button>
 
           <OrderFormDialog />
@@ -296,8 +291,7 @@ export default function OrdersPage() {
           borderBottom: "1px solid rgba(255,255,255,0.05)",
         }}>
           <span style={{ fontSize: 12, color: "#6B6B8F" }}>
-            <strong style={{ color: "#9090B0" }}>{filtered.length}</strong> of{" "}
-            <strong style={{ color: "#9090B0" }}>{q.data?.length ?? 0}</strong> orders
+            <strong style={{ color: "#9090B0" }}>{filtered.length}</strong> / <strong style={{ color: "#9090B0" }}>{q.data?.length ?? 0}</strong> {t("orders_of")}
           </span>
           <div style={{ position: "relative" }}>
             <Search style={{
@@ -307,7 +301,7 @@ export default function OrdersPage() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Filter by ID..."
+              placeholder={t("orders_filter")}
               style={INPUT_STYLE}
             />
           </div>
@@ -322,7 +316,7 @@ export default function OrdersPage() {
           </div>
         ) : q.isError ? (
           <div style={{ padding: 20 }}>
-            <div style={{ color: "#FF4560", fontWeight: 600 }}>Failed to load orders</div>
+            <div style={{ color: "#FF4560", fontWeight: 600 }}>{t("orders_error")}</div>
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: "60px 20px", textAlign: "center" }}>
@@ -333,8 +327,8 @@ export default function OrdersPage() {
               <ShoppingCart style={{ width: 22, height: 22, color: "#8B5CF6" }} />
             </div>
             <div>
-              <div style={{ fontWeight: 600, color: "#E4E4F0" }}>No orders yet</div>
-              <div style={{ fontSize: 12, color: "#6B6B8F", marginTop: 4 }}>Create one to validate the POS flow.</div>
+              <div style={{ fontWeight: 600, color: "#E4E4F0" }}>{t("orders_empty_title")}</div>
+              <div style={{ fontSize: 12, color: "#6B6B8F", marginTop: 4 }}>{t("orders_empty_desc")}</div>
             </div>
             <OrderFormDialog />
           </div>
@@ -343,7 +337,7 @@ export default function OrdersPage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                  {[["Order ID", "left"], ["Total", "right"], ["Items", "right"], ["Date", "right"]].map(([h, align]) => (
+                  {[[t("orders_col_id"), "left"], [t("orders_col_total"), "right"], [t("orders_col_items"), "right"], [t("orders_col_date"), "right"]].map(([h, align]) => (
                     <th key={h} style={{
                       padding: "10px 20px", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em",
                       color: "#3A3A5C", textTransform: "uppercase", textAlign: align as any,
@@ -373,7 +367,7 @@ export default function OrdersPage() {
                       {o.items?.length ?? "—"}
                     </td>
                     <td style={{ padding: "12px 20px", textAlign: "right", fontSize: 12, color: "#6B6B8F" }}>
-                      {fmtDate(o.createdAt)}
+                      {fmtDate(o.createdAt, lang)}
                     </td>
                   </tr>
                 ))}

@@ -1,14 +1,15 @@
 // aws/front/web/src/components/layout/SideNav.tsx
 import { NavLink } from "react-router-dom"
 import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings, Zap } from "lucide-react"
+import { useT } from "../../i18n/I18nContext"
 
-type NavItem = { to: string; label: string; Icon: React.ElementType; disabled?: boolean }
+type NavItem = { to: string; labelKey: string; Icon: React.ElementType; disabled?: boolean }
 
-const sections: { label: string; items: NavItem[] }[] = [
-  { label: "General",  items: [{ to: "/dashboard", label: "Dashboard", Icon: LayoutDashboard }] },
-  { label: "Catálogo", items: [{ to: "/products",  label: "Products",  Icon: Package }] },
-  { label: "Ventas",   items: [{ to: "/orders",    label: "Orders",    Icon: ShoppingCart }] },
-  { label: "Reportes", items: [{ to: "/reports",   label: "Analytics", Icon: BarChart3, disabled: true }] },
+const sections: { labelKey: string; items: NavItem[] }[] = [
+  { labelKey: "sidebar_general",  items: [{ to: "/dashboard", labelKey: "nav_dashboard", Icon: LayoutDashboard }] },
+  { labelKey: "sidebar_catalog",  items: [{ to: "/products",  labelKey: "nav_products",  Icon: Package }] },
+  { labelKey: "sidebar_sales",    items: [{ to: "/orders",    labelKey: "nav_orders",    Icon: ShoppingCart }] },
+  { labelKey: "sidebar_reports",  items: [{ to: "/reports",   labelKey: "nav_analytics", Icon: BarChart3, disabled: true }] },
 ]
 
 const ICON_COLOR: Record<string, string> = {
@@ -31,14 +32,17 @@ const ICON_BORDER: Record<string, string> = {
 }
 
 function NavItemLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
+  const { t } = useT()
+  const label = t(item.labelKey as Parameters<typeof t>[0])
   const isDisabled = item.disabled
   const iconColor   = ICON_COLOR[item.to]  ?? "#4A4A6A"
   const iconBg      = ICON_BG[item.to]     ?? "rgba(255,255,255,0.04)"
   const iconBorder  = ICON_BORDER[item.to] ?? "rgba(255,255,255,0.06)"
+  const { t: tFn } = useT()
 
   if (isDisabled) {
     return (
-      <div title={collapsed ? item.label : undefined} style={{
+      <div title={collapsed ? label : undefined} style={{
         display: "flex", alignItems: "center",
         gap: collapsed ? 0 : 10,
         padding: collapsed ? "8px 0" : "8px 10px",
@@ -55,13 +59,13 @@ function NavItemLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
         </div>
         {!collapsed && (
           <>
-            <span style={{ fontSize: 13, color: "#6B6B8F", flex: 1 }}>{item.label}</span>
+            <span style={{ fontSize: 13, color: "#6B6B8F", flex: 1 }}>{label}</span>
             <span style={{
               fontSize: 9, fontWeight: 700, letterSpacing: "0.08em",
               padding: "2px 6px", borderRadius: 20, textTransform: "uppercase",
               background: "rgba(107,107,143,0.12)", color: "#6B6B8F",
               border: "1px solid rgba(107,107,143,0.18)",
-            }}>Soon</span>
+            }}>{tFn("nav_coming_soon")}</span>
           </>
         )}
       </div>
@@ -72,7 +76,7 @@ function NavItemLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
     <NavLink to={item.to} end={item.to === "/dashboard"} style={{ textDecoration: "none" }}>
       {({ isActive }) => (
         <div
-          title={collapsed ? item.label : undefined}
+          title={collapsed ? label : undefined}
           style={{
             display: "flex", alignItems: "center",
             gap: collapsed ? 0 : 10,
@@ -92,7 +96,6 @@ function NavItemLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
           onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)" }}}
           onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "transparent" }}}
         >
-          {/* Icon */}
           <div style={{
             width: 30, height: 30, borderRadius: 8, flexShrink: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -104,7 +107,6 @@ function NavItemLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
             <item.Icon style={{ width: 14, height: 14, color: isActive ? iconColor : "#4A4A6A" }} />
           </div>
 
-          {/* Label + indicator — hidden when collapsed */}
           {!collapsed && (
             <>
               <span style={{
@@ -113,7 +115,7 @@ function NavItemLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
                 fontWeight: isActive ? 600 : 400,
                 whiteSpace: "nowrap", overflow: "hidden",
                 transition: "color 0.15s",
-              }}>{item.label}</span>
+              }}>{label}</span>
               {isActive && (
                 <span style={{
                   width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
@@ -129,6 +131,8 @@ function NavItemLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
 }
 
 export default function SideNav({ collapsed }: { collapsed: boolean }) {
+  const { t } = useT()
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
 
@@ -155,7 +159,7 @@ export default function SideNav({ collapsed }: { collapsed: boolean }) {
             <div style={{ fontSize: 14, fontWeight: 700, color: "#E4E4F0", letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>
               POS Admin
             </div>
-            <div style={{ fontSize: 10, color: "#6B6B8F", marginTop: 1 }}>Backoffice</div>
+            <div style={{ fontSize: 10, color: "#6B6B8F", marginTop: 1 }}>{t("brand_subtitle")}</div>
           </div>
         )}
 
@@ -169,7 +173,7 @@ export default function SideNav({ collapsed }: { collapsed: boolean }) {
               width: 6, height: 6, borderRadius: "50%", background: "#00D4B4",
               boxShadow: "0 0 6px rgba(0,212,180,0.8)",
             }} />
-            <span style={{ fontSize: 9, fontWeight: 700, color: "#00D4B4", letterSpacing: "0.08em" }}>LIVE</span>
+            <span style={{ fontSize: 9, fontWeight: 700, color: "#00D4B4", letterSpacing: "0.08em" }}>{t("brand_status")}</span>
           </div>
         )}
       </div>
@@ -182,11 +186,11 @@ export default function SideNav({ collapsed }: { collapsed: boolean }) {
       {/* Nav */}
       <nav style={{ flex: 1, overflowY: "auto", padding: collapsed ? "12px 6px" : "12px 10px" }}>
         {sections.map((section, si) => (
-          <div key={section.label} style={{ marginBottom: si < sections.length - 1 ? 6 : 0 }}>
+          <div key={section.labelKey} style={{ marginBottom: si < sections.length - 1 ? 6 : 0 }}>
             {!collapsed && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px 4px" }}>
                 <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.12em", color: "#3A3A5C", textTransform: "uppercase", whiteSpace: "nowrap" }}>
-                  {section.label}
+                  {t(section.labelKey as Parameters<typeof t>[0])}
                 </span>
                 <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.04)" }} />
               </div>

@@ -43,7 +43,6 @@ export default function AppShell() {
             position: "absolute",
             right: -11,
             top: "50%",
-            transform: "translateY(-50%)",
             width: 22, height: 22,
             borderRadius: "50%",
             background: "linear-gradient(135deg,#FF2D87,#8B5CF6)",
