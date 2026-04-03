@@ -26,14 +26,22 @@ function StatusBadge({ active }: { active: boolean }) {
   const { t } = useT()
   return (
     <span
-      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-      style={
-        active
-          ? { background: "rgba(0,212,180,0.12)", color: "#00D4B4", border: "1px solid rgba(0,212,180,0.25)" }
-          : { background: "rgba(107,107,143,0.12)", color: "#6B6B8F", border: "1px solid rgba(107,107,143,0.2)" }
-      }
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 6,
+        borderRadius: 20, padding: "4px 12px",
+        fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
+        whiteSpace: "nowrap",
+        ...(active
+          ? { background: "rgba(0,212,180,0.12)", color: "#00D4B4", border: "1px solid rgba(0,212,180,0.28)" }
+          : { background: "rgba(107,107,143,0.1)", color: "#6B6B8F", border: "1px solid rgba(107,107,143,0.22)" }
+        ),
+      }}
     >
-      <span className="h-1.5 w-1.5 rounded-full" style={{ background: active ? "#00D4B4" : "#6B6B8F" }} />
+      <span style={{
+        width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
+        background: active ? "#00D4B4" : "#6B6B8F",
+        boxShadow: active ? "0 0 6px rgba(0,212,180,0.7)" : "none",
+      }} />
       {active ? t("products_status_active") : t("products_status_inactive")}
     </span>
   )
@@ -236,11 +244,17 @@ export default function ProductsPage() {
             <table className="w-full">
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                  {[t("products_col_name"), t("products_col_price"), t("products_col_status"), ""].map((h, i) => (
+                  {[t("products_col_name"), t("products_col_price"), t("products_col_status")].map((h, i) => (
                     <th
                       key={i}
-                      className={`h-9 px-5 text-[10px] font-bold uppercase tracking-widest text-left ${i === 1 || i === 2 ? "text-right" : ""}`}
-                      style={{ color: "#4A4A6A" }}
+                      style={{
+                        height: 36, padding: "0 20px",
+                        fontSize: 10, fontWeight: 700, letterSpacing: "0.1em",
+                        color: "#4A4A6A", textTransform: "uppercase",
+                        textAlign: i === 0 ? "left" : "right",
+                        whiteSpace: "nowrap",
+                        width: i === 0 ? "auto" : i === 1 ? 100 : 220,
+                      }}
                     >
                       {h}
                     </th>
@@ -260,13 +274,13 @@ export default function ProductsPage() {
                     <td className="px-5 py-2.5 text-right text-sm tabular-nums" style={{ color: "#C4B5FD" }}>
                       {formatMoney(p.price)}
                     </td>
-                    <td className="px-5 py-2.5 text-right">
-                      <StatusBadge active={p.active} />
-                    </td>
-                    <td className="px-5 py-2.5 text-right">
-                      <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                        <ProductFormDialog product={p} />
-                        <DeleteButton productId={p.id} />
+                    <td style={{ padding: "10px 20px", width: 220 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
+                        <StatusBadge active={p.active} />
+                        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                          <ProductFormDialog product={p} />
+                          <DeleteButton productId={p.id} />
+                        </div>
                       </div>
                     </td>
                   </tr>
