@@ -54,9 +54,12 @@ function DeleteButton({ productId }: { productId: string }) {
   const { t } = useT()
 
   const mutation = useMutation({
-    mutationFn: () => deleteProduct(productId),
+    mutationFn: async () => {
+      const res = await deleteProduct(productId)
+      if (!res.ok) throw new Error(res.error.message)
+    },
     onSuccess: () => { toastOk(t("toast_product_deleted")); qc.invalidateQueries({ queryKey: ["products"] }) },
-    onError: () => toastErr(t("products_error_title")),
+    onError: (e: unknown) => toastErr(e instanceof Error ? e.message : t("products_error_title")),
   })
 
   const handleClick = () => {
@@ -117,9 +120,16 @@ function DeleteButton({ productId }: { productId: string }) {
   )
 }
 
+function fmtDate(s: string, lang: "en" | "es") {
+  try {
+    const d = new Date(s)
+    return Number.isNaN(d.getTime()) ? s : d.toLocaleString(lang === "es" ? "es-AR" : "en-US", { dateStyle: "medium", timeStyle: "short" })
+  } catch { return s }
+}
+
 export default function ProductsPage() {
   const [query, setQuery] = React.useState("")
-  const { t } = useT()
+  const { t, lang } = useT()
 
   const q = useQuery({
     queryKey: ["products"],
@@ -225,15 +235,15 @@ export default function ProductsPage() {
             <div className="text-xs mt-1" style={{ color: "#6B6B8F" }}>{t("products_error_desc")}</div>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl" style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)" }}>
-              <Package className="h-6 w-6" style={{ color: "#8B5CF6" }} />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, padding: "80px 20px", textAlign: "center", minHeight: 360 }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)" }}>
+              <Package style={{ width: 26, height: 26, color: "#8B5CF6" }} />
             </div>
-            <div>
-              <div className="text-sm font-semibold text-white">
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: "#E4E4F0" }}>
                 {stats.total === 0 ? t("products_empty_title") : t("products_empty_filter_title")}
               </div>
-              <div className="mt-0.5 text-xs" style={{ color: "#6B6B8F" }}>
+              <div style={{ fontSize: 12, color: "#6B6B8F" }}>
                 {stats.total === 0 ? t("products_empty_desc") : t("products_empty_filter_desc")}
               </div>
             </div>
@@ -244,19 +254,22 @@ export default function ProductsPage() {
             <table className="w-full">
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                  {[t("products_col_name"), t("products_col_price"), t("products_col_status")].map((h, i) => (
+                  {[
+                    { label: t("products_col_name"), align: "left" as const, padding: "0 20px 0 40px", width: undefined },
+                    { label: t("products_col_price"), align: "right" as const, padding: "0 20px", width: 100 },
+                    { label: t("products_col_date"), align: "right" as const, padding: "0 20px", width: 160 },
+                    { label: t("products_col_status"), align: "left" as const, padding: "0 24px 0 20px", width: undefined },
+                  ].map(({ label, align, padding, width }, i) => (
                     <th
                       key={i}
                       style={{
-                        height: 36, padding: "0 20px",
+                        height: 36, padding, width,
                         fontSize: 10, fontWeight: 700, letterSpacing: "0.1em",
                         color: "#4A4A6A", textTransform: "uppercase",
-                        textAlign: i === 0 ? "left" : "right",
-                        whiteSpace: "nowrap",
-                        width: i === 0 ? "auto" : i === 1 ? 100 : 220,
+                        textAlign: align, whiteSpace: "nowrap",
                       }}
                     >
-                      {h}
+                      {label}
                     </th>
                   ))}
                 </tr>
@@ -267,17 +280,20 @@ export default function ProductsPage() {
                     key={p.id}
                     className="group transition-colors"
                     style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(139,92,246,0.06)")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
-                    <td className="px-5 py-2.5 text-sm font-semibold text-white">{p.name}</td>
-                    <td className="px-5 py-2.5 text-right text-sm tabular-nums" style={{ color: "#C4B5FD" }}>
+                    <td style={{ padding: "12px 20px 12px 40px", fontSize: 13, fontWeight: 500, color: "#E4E4F0" }}>{p.name}</td>
+                    <td style={{ padding: "12px 20px", textAlign: "right", fontSize: 13, fontWeight: 500, fontVariantNumeric: "tabular-nums", color: "#C4B5FD" }}>
                       {formatMoney(p.price)}
                     </td>
-                    <td style={{ padding: "10px 20px", width: 220 }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
+                    <td style={{ padding: "12px 20px", textAlign: "right", fontSize: 12, color: "#6B6B8F", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" }}>
+                      {fmtDate(p.createdAt, lang)}
+                    </td>
+                    <td style={{ padding: "10px 24px", whiteSpace: "nowrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 12 }}>
                         <StatusBadge active={p.active} />
-                        <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                        <div className="flex items-center gap-5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                           <ProductFormDialog product={p} />
                           <DeleteButton productId={p.id} />
                         </div>

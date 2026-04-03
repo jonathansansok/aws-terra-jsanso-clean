@@ -52,6 +52,7 @@
   "products_col_name": "Nombre",
   "products_col_price": "Precio",
   "products_col_status": "Estado",
+  "products_col_date": "Fecha",
   "products_new": "Nuevo producto",
   "product_form_new_title": "Nuevo producto",
   "product_form_edit_title": "Editar producto",

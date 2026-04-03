@@ -322,16 +322,13 @@ export default function OrdersPage() {
             <div style={{ color: "#FF4560", fontWeight: 600 }}>{t("orders_error")}</div>
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: "60px 20px", textAlign: "center" }}>
-            <div style={{
-              width: 48, height: 48, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center",
-              background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)",
-            }}>
-              <ShoppingCart style={{ width: 22, height: 22, color: "#8B5CF6" }} />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, padding: "80px 20px", textAlign: "center", minHeight: 360 }}>
+            <div style={{ width: 56, height: 56, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)" }}>
+              <ShoppingCart style={{ width: 26, height: 26, color: "#8B5CF6" }} />
             </div>
-            <div>
-              <div style={{ fontWeight: 600, color: "#E4E4F0" }}>{t("orders_empty_title")}</div>
-              <div style={{ fontSize: 12, color: "#6B6B8F", marginTop: 4 }}>{t("orders_empty_desc")}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: "#E4E4F0" }}>{t("orders_empty_title")}</div>
+              <div style={{ fontSize: 12, color: "#6B6B8F" }}>{t("orders_empty_desc")}</div>
             </div>
             <OrderFormDialog />
           </div>

@@ -48,7 +48,7 @@ export default function TopBar() {
 
   return (
     <header
-      className="flex h-14 shrink-0 items-center justify-between px-6 gap-4"
+      className="flex h-14 shrink-0 items-center justify-between px-10 gap-4"
       style={{
         background: "#0F0E2A",
         borderBottom: "1px solid rgba(255,255,255,0.05)",
@@ -63,7 +63,7 @@ export default function TopBar() {
       </div>
 
       {/* Right */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center shrink-0" style={{ gap: 16, marginRight: 24 }}>
         {/* EN / ES toggle */}
         <div style={{ display: "flex", gap: 4 }}>
           <button
@@ -126,7 +126,6 @@ export default function TopBar() {
         {/* Bell */}
         <button
           className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-white/5"
-          style={{ border: "1px solid rgba(255,255,255,0.06)" }}
         >
           <Bell className="h-4 w-4" style={{ color: "#6B6B8F" }} />
           <span
@@ -137,10 +136,13 @@ export default function TopBar() {
 
         {/* Avatar */}
         <div
-          className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white cursor-pointer"
           style={{
+            ...LANG_BTN,
             background: "linear-gradient(135deg,#FF2D87,#8B5CF6)",
-            boxShadow: "0 0 10px rgba(139,92,246,0.4)",
+            color: "#fff",
+            borderColor: "transparent",
+            boxShadow: "0 0 10px rgba(139,92,246,0.35)",
+            cursor: "pointer",
           }}
         >
           A
