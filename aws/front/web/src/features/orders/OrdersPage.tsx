@@ -34,10 +34,11 @@ const INPUT_STYLE: React.CSSProperties = {
   border: "1px solid rgba(255,255,255,0.08)",
   color: "#E4E4F0",
   borderRadius: "8px",
-  padding: "6px 12px 6px 32px",
-  fontSize: "12px",
-  width: "180px",
+  padding: "8px 14px 8px 34px",
+  fontSize: "13px",
+  width: "210px",
   outline: "none",
+  transition: "border-color 0.15s",
 }
 
 function fmtDate(s: string, lang: "en" | "es") {
@@ -287,7 +288,7 @@ export default function OrdersPage() {
         {/* Toolbar */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "12px 20px",
+          padding: "14px 20px",
           borderBottom: "1px solid rgba(255,255,255,0.05)",
         }}>
           <span style={{ fontSize: 12, color: "#6B6B8F" }}>
@@ -295,7 +296,7 @@ export default function OrdersPage() {
           </span>
           <div style={{ position: "relative" }}>
             <Search style={{
-              position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)",
+              position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
               width: 13, height: 13, color: "#6B6B8F", pointerEvents: "none",
             }} />
             <input
@@ -303,6 +304,8 @@ export default function OrdersPage() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("orders_filter")}
               style={INPUT_STYLE}
+              onFocus={(e) => (e.target.style.borderColor = "rgba(139,92,246,0.5)")}
+              onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.08)")}
             />
           </div>
         </div>

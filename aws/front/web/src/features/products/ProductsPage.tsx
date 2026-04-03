@@ -15,10 +15,11 @@ const INPUT_STYLE: React.CSSProperties = {
   border: "1px solid rgba(255,255,255,0.08)",
   color: "#E4E4F0",
   borderRadius: "8px",
-  padding: "6px 12px 6px 32px",
-  fontSize: "12px",
-  width: "180px",
+  padding: "8px 14px 8px 34px",
+  fontSize: "13px",
+  width: "210px",
   outline: "none",
+  transition: "border-color 0.15s",
 }
 
 function StatusBadge({ active }: { active: boolean }) {
@@ -120,20 +121,20 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
             onClick={() => q.refetch()}
             disabled={q.isFetching}
             style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "7px 14px", borderRadius: 8, cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 7,
+              padding: "8px 16px", borderRadius: 8, cursor: "pointer",
               background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)",
               color: "#9090B0", fontSize: 13, fontWeight: 500, transition: "all 0.15s",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
           >
-            <RefreshCcw className={`h-3.5 w-3.5 ${q.isFetching ? "animate-spin" : ""}`} style={{ width: 13, height: 13 }} />
+            <RefreshCcw className={q.isFetching ? "animate-spin" : ""} style={{ width: 13, height: 13 }} />
             {t("products_refresh")}
           </button>
           <ProductFormDialog />
@@ -144,22 +145,32 @@ export default function ProductsPage() {
       <div className="rounded-xl overflow-hidden" style={CARD}>
         {/* Toolbar */}
         <div
-          className="flex items-center justify-between px-5 py-3"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "14px 20px",
+            borderBottom: "1px solid rgba(255,255,255,0.05)",
+          }}
         >
-          <span className="text-xs font-medium" style={{ color: "#6B6B8F" }}>
+          <span style={{ fontSize: 12, color: "#6B6B8F" }}>
             <strong style={{ color: "#9090B0" }}>{filtered.length}</strong>
             {" / "}
             <strong style={{ color: "#9090B0" }}>{stats.total}</strong>
             {" "}{t("products_of")}
           </span>
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" style={{ color: "#6B6B8F" }} />
+          <div style={{ position: "relative" }}>
+            <Search
+              style={{
+                position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
+                width: 13, height: 13, color: "#6B6B8F", pointerEvents: "none",
+              }}
+            />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("products_filter")}
               style={INPUT_STYLE}
+              onFocus={(e) => (e.target.style.borderColor = "rgba(139,92,246,0.5)")}
+              onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.08)")}
             />
           </div>
         </div>
