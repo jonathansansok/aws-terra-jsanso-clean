@@ -184,6 +184,13 @@ chmod +x scripts/*.sh
 ./scripts/20-ec2-back-run.sh
 ```
 
+> **Prisma included:** The Dockerfile `prod` stage runs `prisma generate` at build time and copies
+> the generated client into the image — no extra step needed for normal deploys.
+> Only run migrations if the schema changed:
+> ```bash
+> ./scripts/30-prisma-migrate-ec2.sh
+> ```
+
 ### 3) Monitor
 
 ```bash
