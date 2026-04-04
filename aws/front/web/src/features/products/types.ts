@@ -4,4 +4,5 @@ export type Product = {
   price: number
   active: boolean
   createdAt: string
+  description?: string
 }

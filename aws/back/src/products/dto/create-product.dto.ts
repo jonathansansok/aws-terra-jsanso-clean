@@ -12,4 +12,9 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  description?: string;
 }

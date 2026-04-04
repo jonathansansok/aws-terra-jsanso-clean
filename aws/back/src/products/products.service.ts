@@ -26,6 +26,7 @@ export class ProductsService {
         name: dto.name,
         price: String(dto.price),
         ...(dto.active !== undefined && { active: dto.active }),
+        ...(dto.description !== undefined && { description: dto.description }),
       },
     });
     console.log('[ProductsService] create ok', { id: row.id });
@@ -42,6 +43,7 @@ export class ProductsService {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.price !== undefined && { price: String(dto.price) }),
         ...(dto.active !== undefined && { active: dto.active }),
+        ...(dto.description !== undefined && { description: dto.description }),
       },
     });
     console.log('[ProductsService] update ok', { id: row.id });

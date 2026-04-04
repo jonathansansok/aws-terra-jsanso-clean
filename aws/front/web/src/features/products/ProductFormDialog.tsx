@@ -10,6 +10,7 @@ import { toastErr, toastOk } from "../../shared/toast"
 import type { Product } from "./types"
 import { Pencil, Plus, X } from "lucide-react"
 import { useT } from "../../i18n/I18nContext"
+import { generateDescription } from "../ai/chatApi"
 
 function getErrMessage(e: unknown): string {
   if (e instanceof Error) return e.message
@@ -47,6 +48,7 @@ type Props = { product?: Product }
 export default function ProductFormDialog({ product }: Props) {
   const [open, setOpen] = useState(false)
   const [closing, setClosing] = useState(false)
+  const [genLoading, setGenLoading] = useState(false)
   const isEdit = !!product
   const qc = useQueryClient()
   const { t } = useT()
@@ -71,12 +73,24 @@ export default function ProductFormDialog({ product }: Props) {
 
   const form = useForm<ProductCreateFormValues>({
     resolver: zodResolver(productCreateSchema),
-    defaultValues: { name: product?.name ?? "", price: product?.price ?? 0, active: product?.active ?? true },
+    defaultValues: {
+      name: product?.name ?? "",
+      price: product?.price ?? 0,
+      active: product?.active ?? true,
+      description: product?.description ?? "",
+    },
     mode: "onChange",
   })
 
   useEffect(() => {
-    if (product && open) form.reset({ name: product.name, price: product.price, active: product.active })
+    if (product && open) {
+      form.reset({
+        name: product.name,
+        price: product.price,
+        active: product.active,
+        description: product.description ?? "",
+      })
+    }
   }, [product?.id, open])
 
   const mutation = useMutation({
@@ -93,17 +107,33 @@ export default function ProductFormDialog({ product }: Props) {
     onSuccess: () => {
       toastOk(isEdit ? t("toast_product_updated") : t("toast_product_created"))
       qc.invalidateQueries({ queryKey: ["products"] })
-      if (!isEdit) form.reset({ name: "", price: 0, active: true })
+      if (!isEdit) form.reset({ name: "", price: 0, active: true, description: "" })
       close()
     },
     onError: (e: unknown) => toastErr(getErrMessage(e), e),
   })
 
+  const handleGenerate = async () => {
+    const name = form.getValues("name")
+    const price = form.getValues("price")
+    if (!name || name.length < 2) return
+    setGenLoading(true)
+    try {
+      const res = await generateDescription(name, price || undefined)
+      if (res.ok) form.setValue("description", res.data.description, { shouldValidate: true })
+      else toastErr(res.error.message)
+    } finally {
+      setGenLoading(false)
+    }
+  }
+
   const isBusy = mutation.isPending
   const canSubmit = useMemo(() => form.formState.isValid && !isBusy, [form.formState.isValid, isBusy])
-  const { register, handleSubmit, formState: { errors } } = form
+  const { register, handleSubmit, formState: { errors }, watch } = form
   const nameReg = register("name")
   const priceReg = register("price", { valueAsNumber: true })
+  const descReg = register("description")
+  const nameValue = watch("name")
 
   const backdropAnim = closing ? "backdropOut 0.2s ease forwards" : "backdropIn 0.2s ease forwards"
   const modalAnim = closing ? "modalOut 0.2s ease forwards" : "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1) forwards"
@@ -240,6 +270,38 @@ export default function ProductFormDialog({ product }: Props) {
                     />
                     {errors.price?.message && (
                       <p style={{ fontSize: 11, color: "#FF4560", marginTop: 5 }}>{String(errors.price.message)}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                      <label style={{ ...LABEL, marginBottom: 0 }}>{t("product_form_description")}</label>
+                      <button
+                        type="button"
+                        onClick={handleGenerate}
+                        disabled={genLoading || !nameValue || nameValue.length < 2}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 4,
+                          padding: "3px 10px", borderRadius: 6, cursor: "pointer",
+                          background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)",
+                          color: "#A78BFA", fontSize: 11, fontWeight: 600,
+                          opacity: (genLoading || !nameValue || nameValue.length < 2) ? 0.5 : 1,
+                          transition: "opacity 0.15s",
+                        }}
+                      >
+                        {genLoading ? t("ai_generating") : "✨ Generate"}
+                      </button>
+                    </div>
+                    <textarea
+                      rows={3}
+                      placeholder={t("product_form_description_placeholder")}
+                      style={{ ...INPUT, resize: "vertical", minHeight: 72, fontFamily: "inherit" }}
+                      {...descReg}
+                      onFocus={(e) => (e.target.style.borderColor = "rgba(139,92,246,0.6)")}
+                      onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
+                    />
+                    {errors.description?.message && (
+                      <p style={{ fontSize: 11, color: "#FF4560", marginTop: 5 }}>{String(errors.description.message)}</p>
                     )}
                   </div>
                 </div>

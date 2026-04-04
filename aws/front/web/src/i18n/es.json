@@ -101,5 +101,10 @@
   "toast_product_created": "Producto creado",
   "toast_product_updated": "Producto actualizado",
   "toast_product_deleted": "Producto eliminado",
-  "toast_order_created": "Pedido creado"
+  "toast_order_created": "Pedido creado",
+  "product_form_description": "Descripción",
+  "product_form_description_placeholder": "Descripción corta del producto...",
+  "ai_chat_title": "Asistente IA",
+  "ai_chat_placeholder": "Pregunta sobre tu tienda...",
+  "ai_generating": "Generando..."
 }

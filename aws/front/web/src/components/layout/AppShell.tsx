@@ -3,6 +3,7 @@ import { useState } from "react"
 import { Outlet } from "react-router-dom"
 import SideNav from "./SideNav"
 import TopBar from "./TopBar"
+import ChatWidget from "../../features/ai/ChatWidget"
 
 export default function AppShell() {
   const [collapsed, setCollapsed] = useState(false)
@@ -77,6 +78,7 @@ export default function AppShell() {
           <Outlet />
         </main>
       </div>
+      <ChatWidget />
     </div>
   )
 }
