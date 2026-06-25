@@ -244,7 +244,7 @@ export default function OrdersPage() {
   const totalRevenue = q.data?.reduce((s, o) => s + Number(o.total), 0) ?? 0
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 28, paddingTop: 8, paddingLeft: 8 }}>
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>

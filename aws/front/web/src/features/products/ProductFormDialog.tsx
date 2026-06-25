@@ -8,7 +8,7 @@ import { productCreateSchema, type ProductCreateFormValues, type ProductCreatePa
 import { createProduct, updateProduct } from "./api"
 import { toastErr, toastOk } from "../../shared/toast"
 import type { Product } from "./types"
-import { Pencil, Plus, X } from "lucide-react"
+import { Pencil, Plus, X, ChevronUp, ChevronDown } from "lucide-react"
 import { useT } from "../../i18n/I18nContext"
 import { generateDescription } from "../ai/chatApi"
 
@@ -134,6 +134,13 @@ export default function ProductFormDialog({ product }: Props) {
   const priceReg = register("price", { valueAsNumber: true })
   const descReg = register("description")
   const nameValue = watch("name")
+  const priceValue = watch("price")
+
+  const stepPrice = (delta: number) => {
+    const cur = Number(priceValue) || 0
+    const next = Math.max(0, Math.round((cur + delta) * 100) / 100)
+    form.setValue("price", next, { shouldValidate: true })
+  }
 
   const backdropAnim = closing ? "backdropOut 0.2s ease forwards" : "backdropIn 0.2s ease forwards"
   const modalAnim = closing ? "modalOut 0.2s ease forwards" : "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1) forwards"
@@ -258,16 +265,31 @@ export default function ProductFormDialog({ product }: Props) {
 
                   <div>
                     <label style={LABEL}>{t("product_form_price")}</label>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      placeholder={t("product_form_price_placeholder")}
-                      style={INPUT}
-                      {...priceReg}
-                      onFocus={(e) => (e.target.style.borderColor = "rgba(139,92,246,0.6)")}
-                      onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
-                    />
+                    <div style={{ position: "relative", width: "100%" }}>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        placeholder={t("product_form_price_placeholder")}
+                        style={{ ...INPUT, paddingRight: 34 }}
+                        {...priceReg}
+                        onFocus={(e) => (e.target.style.borderColor = "rgba(139,92,246,0.6)")}
+                        onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
+                      />
+                      <div style={{
+                        position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                        display: "flex", flexDirection: "column",
+                      }}>
+                        <button type="button" onClick={() => stepPrice(1)}
+                          style={{ display: "flex", width: 20, height: 13, padding: 0, cursor: "pointer", color: "#9090B0", background: "transparent", border: "none" }}>
+                          <ChevronUp style={{ width: 13, height: 13 }} />
+                        </button>
+                        <button type="button" onClick={() => stepPrice(-1)}
+                          style={{ display: "flex", width: 20, height: 13, padding: 0, cursor: "pointer", color: "#9090B0", background: "transparent", border: "none" }}>
+                          <ChevronDown style={{ width: 13, height: 13 }} />
+                        </button>
+                      </div>
+                    </div>
                     {errors.price?.message && (
                       <p style={{ fontSize: 11, color: "#FF4560", marginTop: 5 }}>{String(errors.price.message)}</p>
                     )}

@@ -117,7 +117,7 @@ export default function DashboardPage() {
   const weekData = fillWeek(d?.revenueByDay ?? [], lang)
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 28, paddingTop: 8, paddingLeft: 8 }}>
 
       {/* Section title */}
       <div>

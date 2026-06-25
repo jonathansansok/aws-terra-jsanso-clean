@@ -53,12 +53,16 @@ No NAT Gateway (cost optimization). RDS is inaccessible from dev machines direct
 
 ### Backend Structure (`aws/back/src/`)
 - `main.ts` — global `/api` prefix, CORS, ValidationPipe, Swagger at `/api/docs`
-- `app.module.ts` — aggregates Config, Prisma, Health, Products, Orders modules
+- `app.module.ts` — aggregates Config, Prisma, Health, Products, Orders, Stats, AI modules
 - `prisma/` — PrismaService using MariaDB adapter
 - `products/`, `orders/`, `health/` — NestJS modules (controller → service → Prisma)
+- `stats/` — dashboard aggregations (totals, top products, orders today); consumed by frontend dashboard + AI chat context
+- `ai/` — Anthropic SDK (`claude-haiku-4-5-20251001`): `describeProduct` (product copy) and `chat` (backoffice assistant, injects `StatsService.getDashboard()` into system prompt)
 
 ### Frontend Structure (`aws/front/web/src/`)
 - `features/products/`, `features/orders/` — each has `api.ts`, components, types, Zod schemas
+- `features/dashboard/` — KPIs + charts (Recharts)
+- `features/ai/` — `ChatWidget.tsx` talking to `/api/ai/chat`
 - `shared/` — `env.ts` (VITE_API_BASE_URL), HTTP client, React Query client, formatters
 - `components/` — Shadcn/ui wrappers and layout components
 - `app/router.tsx` — React Router 7 routes
@@ -75,7 +79,8 @@ No NAT Gateway (cost optimization). RDS is inaccessible from dev machines direct
 NODE_ENV=development
 PORT=3000
 CORS_ORIGIN=http://localhost:5173
-DATABASE_URL=mysql://root:root@localhost:3307/awsok
+DATABASE_URL=mysql://root:root@localhost:3307/app_db
+ANTHROPIC_API_KEY=sk-ant-...   # required; AiService throws on boot if missing
 ```
 
 **Frontend** (`.env.local`):
@@ -90,7 +95,9 @@ VITE_API_BASE_URL=/api    # defaults to /api if unset
 - Backend uses class-validator DTOs with the global ValidationPipe
 - Prisma migrations are committed; run `prisma migrate dev` after pulling schema changes
 - No file should exceed 500 lines; one function/component per file
-- Local DB is `app_db` (not `awsok`) — use `--default-character-set=utf8mb4` for inserts with Spanish chars
+- Local DB is `app_db` — use `--default-character-set=utf8mb4` for inserts with Spanish chars
+- Docker MySQL listens on host `:3307` → container `:3306`
+- Run single backend test: `npx jest path/to/file.spec.ts` (Jest `rootDir` is `src/`, regex `.*\.spec\.ts$`)
 
 ## Phase 2 Roadmap — ECR + ECS Fargate
 

@@ -22,6 +22,12 @@ function safeJsonParse(text: string, ctx: { url: string }) : unknown | null {
   }
 }
 
+// Errores 5xx => servidor AWS caído por falta de pago, no por bug de código
+function awsUnpaidMessage(message: string, status: number): string {
+  const isInternal = status >= 500 || /internal server error/i.test(message)
+  return isInternal ? "AWS no Paid" : message
+}
+
 function pickErrMessage(details: unknown, status: number): { code: string; message: string } {
   // Convenciones típicas: { error: { code, message } } o { message }
   if (typeof details === "object" && details !== null) {
@@ -86,7 +92,7 @@ export async function apiFetch<T>(cfg: ReqCfg): Promise<ApiResponse<T>> {
 
     if (!res.ok) {
       const { code, message } = pickErrMessage(json, res.status)
-      return { ok: false, error: { code, message, details: json } }
+      return { ok: false, error: { code, message: awsUnpaidMessage(message, res.status), details: json } }
     }
 
     return { ok: true, data: (json ?? null) as T }

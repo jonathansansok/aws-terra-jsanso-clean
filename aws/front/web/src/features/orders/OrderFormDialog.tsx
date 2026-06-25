@@ -11,7 +11,7 @@ import { getProducts } from "../products/api"
 import { toastErr, toastOk } from "../../shared/toast"
 import { formatMoney, toMoneyNumber } from "../../shared/money"
 import type { Product } from "../products/types"
-import { X, Plus, Trash2 } from "lucide-react"
+import { X, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react"
 import { useT } from "../../i18n/I18nContext"
 
 function toErrMessage(e: unknown) {
@@ -36,17 +36,104 @@ const SELECT_STYLE: React.CSSProperties = {
   width: "100%",
   background: "rgba(255,255,255,0.05)",
   border: "1px solid rgba(255,255,255,0.1)",
-  borderRadius: 8, padding: "8px 10px",
+  borderRadius: 8, padding: "8px 38px 8px 10px",
   fontSize: 13, color: "#E4E4F0", outline: "none",
+  appearance: "none", WebkitAppearance: "none", MozAppearance: "none",
+  cursor: "pointer",
 }
+
+const OPTION_STYLE: React.CSSProperties = { background: "#1E1D4A", color: "#E4E4F0" }
 
 const INPUT_NUM: React.CSSProperties = {
   width: "100%",
   background: "rgba(255,255,255,0.05)",
   border: "1px solid rgba(255,255,255,0.1)",
-  borderRadius: 8, padding: "8px 10px",
+  borderRadius: 8, padding: "8px 30px 8px 10px",
   fontSize: 13, color: "#E4E4F0", outline: "none",
   textAlign: "right",
+  appearance: "textfield", MozAppearance: "textfield",
+}
+
+// ── Product select with toggling chevron ────────────────────────────────────
+function ProductSelect({
+  value, onChange, disabled, products,
+}: {
+  value: string
+  onChange: (v: string) => void
+  disabled?: boolean
+  products: Product[]
+}) {
+  const [open, setOpen] = useState(false)
+  const { t } = useT()
+  const Chevron = open ? ChevronUp : ChevronDown
+  return (
+    <div style={{ position: "relative", width: "100%" }}>
+      <select
+        style={SELECT_STYLE}
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setOpen(false) }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        onMouseDown={() => setOpen((o) => !o)}
+        disabled={disabled}
+      >
+        <option value="" style={OPTION_STYLE}>{t("order_form_select")}</option>
+        {products.map((p) => (
+          <option key={p.id} value={p.id} style={OPTION_STYLE}>
+            {p.name} — {formatMoney(p.price)}
+          </option>
+        ))}
+      </select>
+      <Chevron
+        style={{
+          position: "absolute", right: 12, top: "50%",
+          transform: "translateY(-50%)", width: 15, height: 15,
+          color: "#9090B0", pointerEvents: "none",
+        }}
+      />
+    </div>
+  )
+}
+
+// ── Quantity stepper with chevron buttons ───────────────────────────────────
+function QtyStepper({
+  value, onChange, disabled,
+}: {
+  value: number
+  onChange: (v: number) => void
+  disabled?: boolean
+}) {
+  const btn: React.CSSProperties = {
+    display: "flex", alignItems: "center", justifyContent: "center",
+    width: 20, height: 13, cursor: disabled ? "not-allowed" : "pointer",
+    color: "#9090B0", background: "transparent", border: "none", padding: 0,
+  }
+  return (
+    <div style={{ position: "relative", width: "100%" }}>
+      <input
+        type="number"
+        style={INPUT_NUM}
+        value={String(value)}
+        onChange={(e) => onChange(toQtyNumber(e.target.value))}
+        min={1}
+        step={1}
+        disabled={disabled}
+      />
+      <div style={{
+        position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+        display: "flex", flexDirection: "column",
+      }}>
+        <button type="button" style={btn} disabled={disabled}
+          onClick={() => onChange(toQtyNumber(String(value + 1)))}>
+          <ChevronUp style={{ width: 13, height: 13 }} />
+        </button>
+        <button type="button" style={btn} disabled={disabled}
+          onClick={() => onChange(toQtyNumber(String(value - 1)))}>
+          <ChevronDown style={{ width: 13, height: 13 }} />
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export default function OrderFormDialog() {
@@ -260,37 +347,25 @@ export default function OrderFormDialog() {
                               borderRadius: 10, padding: "10px 12px",
                             }}
                           >
-                            <select
-                              style={SELECT_STYLE}
+                            <ProductSelect
                               value={String(it.productId ?? "")}
-                              onChange={(e) => {
+                              products={products}
+                              disabled={isBusy}
+                              onChange={(v) => {
                                 const next = [...itemsSafe]
-                                next[idx] = { ...next[idx], productId: e.target.value }
+                                next[idx] = { ...next[idx], productId: v }
                                 form.setValue("items", next, { shouldValidate: true })
                               }}
-                              disabled={isBusy}
-                            >
-                              <option value="">{t("order_form_select")}</option>
-                              {products.map((p) => (
-                                <option key={p.id} value={p.id}>
-                                  {p.name} — {formatMoney(p.price)}
-                                </option>
-                              ))}
-                            </select>
+                            />
 
-                            <input
-                              type="number"
-                              style={INPUT_NUM}
-                              value={String(it.quantity ?? 1)}
-                              onChange={(e) => {
-                                const qty = toQtyNumber(e.target.value)
+                            <QtyStepper
+                              value={Number(it.quantity ?? 1)}
+                              disabled={isBusy}
+                              onChange={(qty) => {
                                 const next = [...itemsSafe]
                                 next[idx] = { ...next[idx], quantity: qty }
                                 form.setValue("items", next, { shouldValidate: true })
                               }}
-                              min={1}
-                              step={1}
-                              disabled={isBusy}
                             />
 
                             <div style={{ textAlign: "right" }}>

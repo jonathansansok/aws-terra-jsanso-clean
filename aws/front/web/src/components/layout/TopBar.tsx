@@ -1,5 +1,5 @@
 // aws/front/web/src/components/layout/TopBar.tsx
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState, useEffect, useRef } from "react"
 import { useLocation } from "react-router-dom"
 import { Search, Bell } from "lucide-react"
 import { useT } from "../../i18n/I18nContext"
@@ -19,11 +19,11 @@ function useLiveClock() {
 }
 
 const LANG_BTN: React.CSSProperties = {
-  fontSize: 11,
+  fontSize: 12,
   fontWeight: 700,
   letterSpacing: "0.06em",
-  padding: "3px 8px",
-  borderRadius: 6,
+  padding: "6px 12px",
+  borderRadius: 8,
   cursor: "pointer",
   border: "1px solid rgba(255,255,255,0.08)",
   transition: "all 0.15s",
@@ -33,6 +33,17 @@ export default function TopBar() {
   const loc = useLocation()
   const { lang, setLang, t } = useT()
   const now = useLiveClock()
+  const [bellOpen, setBellOpen] = useState(false)
+  const bellRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!bellOpen) return
+    const onDown = (e: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false)
+    }
+    document.addEventListener("mousedown", onDown)
+    return () => document.removeEventListener("mousedown", onDown)
+  }, [bellOpen])
 
   const meta = useMemo(() => {
     if (loc.pathname.startsWith("/dashboard")) return { title: t("topbar_dashboard_title"), desc: t("topbar_dashboard_desc") }
@@ -48,24 +59,25 @@ export default function TopBar() {
 
   return (
     <header
-      className="flex h-14 shrink-0 items-center justify-between px-10 gap-4"
+      className="flex shrink-0 items-center justify-between gap-4"
       style={{
+        height: 60, minHeight: 60,
+        paddingLeft: 32, paddingRight: 40,
         background: "#0F0E2A",
         borderBottom: "1px solid rgba(255,255,255,0.05)",
       }}
     >
       {/* Left — page title */}
       <div className="flex items-center gap-3 min-w-0">
-        <div>
-          <h1 className="text-sm font-bold text-white">{meta.title}</h1>
-          <p className="text-[11px]" style={{ color: "#6B6B8F" }}>{meta.desc}</p>
+        <div style={{ display: "flex", alignItems: "center", minWidth: 0 }}>
+          <h1 className="text-lg font-bold text-white" style={{ margin: 0, whiteSpace: "nowrap" }}>{meta.title}</h1>
         </div>
       </div>
 
       {/* Right */}
-      <div className="flex items-center shrink-0" style={{ gap: 16, marginRight: 24 }}>
+      <div className="flex items-center shrink-0" style={{ gap: 22, marginRight: 24 }}>
         {/* EN / ES toggle */}
-        <div style={{ display: "flex", gap: 4 }}>
+        <div style={{ display: "flex", gap: 8 }}>
           <button
             onClick={() => setLang("en")}
             style={{
@@ -124,15 +136,85 @@ export default function TopBar() {
         </div>
 
         {/* Bell */}
-        <button
-          className="relative flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-white/5"
-        >
-          <Bell className="h-4 w-4" style={{ color: "#6B6B8F" }} />
-          <span
-            className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full"
-            style={{ background: "#FF2D87" }}
-          />
-        </button>
+        <div className="relative" ref={bellRef}>
+          <button
+            onClick={() => setBellOpen((v) => !v)}
+            className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors hover:bg-white/5"
+          >
+            <Bell className="h-4 w-4" style={{ color: bellOpen ? "#C4B5FD" : "#6B6B8F" }} />
+            <span
+              className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full"
+              style={{ background: "#FF2D87" }}
+            />
+          </button>
+
+          {bellOpen && (
+            <div
+                className="absolute z-50"
+                style={{
+                  top: "calc(100% + 12px)",
+                  right: 0,
+                  width: 320,
+                  borderRadius: 18,
+                  background: "linear-gradient(180deg,#1A1838,#14122E)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: "0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.08)",
+                  overflow: "hidden",
+                }}
+              >
+                {/* arrow */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: -6,
+                    right: 14,
+                    width: 12,
+                    height: 12,
+                    background: "#1A1838",
+                    borderLeft: "1px solid rgba(255,255,255,0.08)",
+                    borderTop: "1px solid rgba(255,255,255,0.08)",
+                    transform: "rotate(45deg)",
+                  }}
+                />
+                {/* header */}
+                <div
+                  className="flex items-center justify-between"
+                  style={{
+                    padding: "14px 18px",
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <span className="text-sm font-bold text-white">{t("topbar_notifications")}</span>
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                    style={{ background: "rgba(139,92,246,0.18)", color: "#C4B5FD" }}
+                  >
+                    0
+                  </span>
+                </div>
+                {/* empty state */}
+                <div
+                  className="flex flex-col items-center justify-center gap-3"
+                  style={{ padding: "32px 18px" }}
+                >
+                  <div
+                    className="flex items-center justify-center rounded-full"
+                    style={{
+                      height: 48,
+                      width: 48,
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                    }}
+                  >
+                    <Bell className="h-5 w-5" style={{ color: "#6B6B8F" }} />
+                  </div>
+                  <span className="text-xs" style={{ color: "#6B6B8F", marginTop: 4 }}>
+                    {t("topbar_no_notifications")}
+                  </span>
+                </div>
+            </div>
+          )}
+        </div>
 
         {/* Avatar */}
         <div

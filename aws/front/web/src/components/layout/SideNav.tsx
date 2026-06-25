@@ -138,12 +138,12 @@ export default function SideNav({ collapsed }: { collapsed: boolean }) {
 
       {/* Brand */}
       <div style={{
-        padding: collapsed ? "14px 0" : "14px 16px",
+        padding: collapsed ? "0" : "0 16px",
         borderBottom: "1px solid rgba(255,255,255,0.05)",
         display: "flex", alignItems: "center",
         justifyContent: collapsed ? "center" : "flex-start",
         gap: 10,
-        minHeight: 60,
+        height: 60, minHeight: 60, flexShrink: 0,
       }}>
         <div style={{
           width: 36, height: 36, borderRadius: 10, flexShrink: 0,
@@ -157,7 +157,7 @@ export default function SideNav({ collapsed }: { collapsed: boolean }) {
         {!collapsed && (
           <div style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#E4E4F0", letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>
-              POS Admin
+              POS Adm
             </div>
             <div style={{ fontSize: 10, color: "#6B6B8F", marginTop: 1 }}>{t("brand_subtitle")}</div>
           </div>

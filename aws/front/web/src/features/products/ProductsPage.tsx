@@ -153,18 +153,18 @@ export default function ProductsPage() {
   }, [q.data, query])
 
   return (
-    <div className="space-y-5">
+    <div style={{ display: "flex", flexDirection: "column", gap: 28, paddingTop: 8, paddingLeft: 8 }}>
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
         <div>
-          <h2 className="text-lg font-bold text-white">{t("products_title")}</h2>
-          <p className="text-xs" style={{ color: "#6B6B8F" }}>{t("products_desc")}</p>
-          <div className="mt-2 flex items-center gap-3 text-xs" style={{ color: "#6B6B8F" }}>
-            <span><span className="font-bold text-white">{stats.total}</span> {t("products_total")}</span>
-            <span className="opacity-30">·</span>
-            <span><span className="font-bold" style={{ color: "#00D4B4" }}>{stats.active}</span> {t("products_active")}</span>
-            <span className="opacity-30">·</span>
-            <span><span className="font-bold">{stats.inactive}</span> {t("products_inactive")}</span>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#E4E4F0", margin: 0 }}>{t("products_title")}</h2>
+          <p style={{ fontSize: 12, color: "#6B6B8F", marginTop: 4 }}>{t("products_desc")}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8, fontSize: 12, color: "#6B6B8F" }}>
+            <span><strong style={{ color: "#E4E4F0" }}>{stats.total}</strong> {t("products_total")}</span>
+            <span style={{ opacity: 0.3 }}>·</span>
+            <span><strong style={{ color: "#00D4B4" }}>{stats.active}</strong> {t("products_active")}</span>
+            <span style={{ opacity: 0.3 }}>·</span>
+            <span><strong style={{ color: "#E4E4F0" }}>{stats.inactive}</strong> {t("products_inactive")}</span>
           </div>
         </div>
 

@@ -167,4 +167,11 @@
   ::selection {
     background: rgba(139,92,246,0.35);
   }
+
+  /* Hide native number spinner (custom chevron stepper used instead) */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
